@@ -59,21 +59,18 @@ def compare_teams(team_array,master_array,team_env):
                     for tkey in t_array[ateam]:
                         for team_info in t_array[ateam][tkey]:
 
-                            print(team_info)
+                            if team_info['environment_mapping'] == master_info['environment_mapping'] \
+                                    and master_info['environment_mapping'] != "-1" \
+                                    and team_info['environment_mapping'] != "-1":
 
+                                amatch = compare_environment(team_info['version'], master_info['version'])
 
+                                compared_array.append( {"master_env":master_info['environmentname'],
+                                                         "master_version":master_info['version'],
+                                                         "master_updateddate":master_info['dateupdated'],
+                                                         "team_env":team_info['environmentname'],
+                                                         "team_version":team_info['version'],
+                                                         "team_updateddate":team_info['dateupdated'],
+                                                         "Match":amatch, "team":tkey})
 
-                        if t_array[ateam][tkey]['environment_mapping'] == m_array[amaster][mkey]['environment_mapping'] \
-                                and m_array[amaster][mkey]['environment_mapping'] != "-1" \
-                                and t_array[ateam][tkey]['environment_mapping'] != "-1":
-
-                            amatch = compare_environment(t_array[ateam][tkey]['version'], m_array[amaster][mkey]['version'])
-
-                            compared_array.append(  {"master_env":m_array[amaster][mkey]['environmentname'],
-                                                     "master_version":m_array[amaster][mkey]['version'],
-                                                     "master_updateddate":m_array[amaster][mkey]['dateupdated'],
-                                                     "team_env":t_array[ateam][tkey]['environmentname'],
-                                                     "team_version":t_array[ateam][tkey]['version'],
-                                                     "team_updateddate":t_array[ateam][tkey]['dateupdated'],
-                                                     "Match":amatch, "team":t_array[ateam][tkey]['team']} )
     return compared_array

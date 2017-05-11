@@ -53,14 +53,13 @@ def main(argv):
 
         team_list = config_map["Teams"]
         for team in team_list:
-
             plugins_list = team_list[team]["plugins"]
             for aplugin in plugins_list:
                 plugin_name = aplugin["pluginname"]
 
                 if team_list[team]["master"] == "TRUE":
                     # add master environment mapping elements
-                    team_env.append({"team": "master", "environments": aplugin["environments"]})
+                    team_env.append({"team": team, "environments": aplugin["environments"]})
                 elif team_list[team]["master"] == "FALSE":
                     # add team environment mapping elements
                     team_env.append({"team":team, "environments" : aplugin["environments"]})

@@ -1,5 +1,7 @@
-
+import pprint
 from difflib import SequenceMatcher
+from operator import itemgetter
+
 
 def id():
     return "compare"
@@ -9,7 +11,9 @@ def log(message):
 
 def display_results(data_array):
 
-    for value in data_array:
+    sorted_array = sorted(data_array, key=itemgetter('team'))
+
+    for value in sorted_array:
         print("M_Environment = [" + value['master_env'] + "] *  M_Version = " + value['master_version'] +"master updated on "
               + value["master_updateddate"].strftime('%m/%d/%Y %H:%M:%S')
               + " * Team: " +value['team']+ " T_Environment = ["+value['team_env'] + "] * T_Version " + value['team_version']
