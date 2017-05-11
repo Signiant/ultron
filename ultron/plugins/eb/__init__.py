@@ -111,3 +111,7 @@ def check_versions(profile_name, region_name, chealth, env_array, onlyiflive):
         # print("Application = "+current_app+"// Environment = "+current_env+"// Version = "+current_version+"// last updated = "+str(env['DateUpdated']))
 
     return appversions
+
+
+
+

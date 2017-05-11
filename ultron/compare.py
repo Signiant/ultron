@@ -74,3 +74,4 @@ def compare_teams(team_array,master_array,team_env):
                                                          "Match":amatch, "team":tkey})
 
     return compared_array
+

@@ -1,5 +1,4 @@
 import pprint
-from difflib import SequenceMatcher
 from operator import itemgetter
 
 

@@ -78,7 +78,7 @@ def main(argv):
                 if debug:   pprint.pprint(plugin_data)
                 # Store the plugin output in a dict
                 if team_list[team]["master"] == "TRUE":
-                    """""
+                    """""     
                     mdata = plugin_data
                     for m in mdata:
                         m.update({"team": "master"})
