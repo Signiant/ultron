@@ -92,9 +92,8 @@ def main(argv):
                 except Exception, e:
                     print str(e)
 
-    #logging.debug(masterdata)
-    #logging.debug(teamdata)
-    #logging.debug(team_env)
+    logging.debug(masterdata)
+    logging.debug(teamdata)
 
     compared_data = compare.compare_teams(teamdata,masterdata)
     output.display_results(compared_data)
