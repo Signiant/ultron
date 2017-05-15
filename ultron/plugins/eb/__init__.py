@@ -1,5 +1,6 @@
 import boto3,json,imp,pprint
 from botocore.exceptions import ClientError
+import logging
 
 appversions = []
 
@@ -29,7 +30,6 @@ def get_env_elb(envname,region, current_session):
 
 def is_current_eb_env_live(env_lb,switchable_dns_entry,zoneid,region, current_session):
     isLive = False
-
     current_live_elb = get_r53_alias_entry(switchable_dns_entry, zoneid, current_session).rstrip('.').lower()
 
     if current_live_elb.startswith(env_lb.lower()):
@@ -41,24 +41,25 @@ def is_current_eb_env_live(env_lb,switchable_dns_entry,zoneid,region, current_se
 # Get the route53 Alias entry for a given name
 #
 def get_r53_alias_entry(query_name,zoneid, current_session):
-    endpoint = ""
 
-    client = current_session.client('route53')
+    try:
+        endpoint = ""
 
-    response = client.list_resource_record_sets(
-        HostedZoneId=zoneid,
-        StartRecordName=query_name,
-        StartRecordType='A',
-        MaxItems='1'
-    )
-
-    if response:
-        endpoint = response['ResourceRecordSets'][0]['AliasTarget']['DNSName']
+        client = current_session.client('route53')
+        response = client.list_resource_record_sets(
+            HostedZoneId=zoneid,
+            StartRecordName=query_name,
+            StartRecordType='A',
+            MaxItems='1'
+        )
+        if response:
+            endpoint = response['ResourceRecordSets'][0]['AliasTarget']['DNSName']
+    except Exception, e:
+        print str(e)
 
     return endpoint
 
 def check_versions(profile_name, region_name, chealth, env_array, onlyiflive):
-
 
     mysession = boto3.session.Session(profile_name=profile_name, region_name=region_name)
     client = mysession.client('elasticbeanstalk')
@@ -66,8 +67,7 @@ def check_versions(profile_name, region_name, chealth, env_array, onlyiflive):
         IncludeDeleted=False,
     )
 
-
-    #pprint.pprint(response)
+    #logging.debug(pprint.pprint(response))
     for env in response['Environments']:
 
         c_version = env['VersionLabel']
@@ -82,27 +82,28 @@ def check_versions(profile_name, region_name, chealth, env_array, onlyiflive):
                         ('solutionstack'): c_solstack, ('health'): c_health, ('dateupdated'):date_updated}
 
         for areas in env_array:
-            if env_array[areas]["name"] in c_env:
+            if areas in c_app:
                 if onlyiflive:
-
                     current_dns_name = env_array[areas]['dns_name']
                     current_zone_id = env_array[areas]['zone_id']
 
                     if current_dns_name != "" and current_zone_id != "":
+
                         env_lb = get_env_elb(c_env, region_name, mysession)
                         checklive = is_current_eb_env_live(env_lb, current_dns_name, current_zone_id, region_name,mysession)
+
                     else:
-                        checklive = "FALSE"
+                        checklive = False
 
                     if checklive:
-                        if chealth == "TRUE":
+                        if chealth:
                             if env['Health'] == "Green":
                                 appversions.append(c_appversion)
                         else:
                             appversions.append(c_appversion)
                 #if check is false
                 else:
-                    if chealth == "TRUE":
+                    if chealth:
                         if env['Health'] == "Green":
                             appversions.append(c_appversion)
                     else:
