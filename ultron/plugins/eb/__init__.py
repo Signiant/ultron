@@ -67,7 +67,6 @@ def check_versions(profile_name, region_name, chealth, env_array, onlyiflive):
         IncludeDeleted=False,
     )
 
-    #logging.debug(pprint.pprint(response))
     for env in response['Environments']:
 
         c_version = env['VersionLabel']
@@ -79,10 +78,23 @@ def check_versions(profile_name, region_name, chealth, env_array, onlyiflive):
 
         # set app version
         c_appversion = {('app'): c_app, ('version'): c_version, ('environmentname'): c_env,
-                        ('solutionstack'): c_solstack, ('health'): c_health, ('dateupdated'):date_updated}
+                        ('solutionstack'): c_solstack, ('health'): c_health, ('dateupdated'):date_updated,
+                        ('regionname'): region_name}
 
         for areas in env_array:
+
             if areas in c_app:
+                logging.debug("MATCH: version label is %s app is %s environment is %s\n areas is %s checking app %s\n\n"%(c_version,c_app,c_env, areas,c_app))
+            else:
+                logging.debug("version label is %s app is %s environment is %s\n areas is %s checking app %s" % (
+                c_version, c_app, c_env, areas, c_app))
+
+
+            #revert to "for areas in c_app if irregularities occur in matches"
+            current_application_name =  c_app.replace(" ","").lower()
+            current_application_keyword = areas.replace(" ","").lower()
+
+            if current_application_keyword in current_application_name:
                 if onlyiflive:
                     current_dns_name = env_array[areas]['dns_name']
                     current_zone_id = env_array[areas]['zone_id']
@@ -108,8 +120,6 @@ def check_versions(profile_name, region_name, chealth, env_array, onlyiflive):
                             appversions.append(c_appversion)
                     else:
                         appversions.append(c_appversion)
-
-        # print("Application = "+current_app+"// Environment = "+current_env+"// Version = "+current_version+"// last updated = "+str(env['DateUpdated']))
 
     return appversions
 

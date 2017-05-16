@@ -1,4 +1,4 @@
-import json
+import json, requests
 import os, sys
 import pprint
 import imp, argparse
@@ -95,10 +95,11 @@ def main(argv):
     logging.debug(masterdata)
     logging.debug(teamdata)
 
-    compared_data = compare.compare_teams(teamdata,masterdata)
-    output.display_results(compared_data)
-
-
+    for eachplugin in teamdata:
+        for eachteam in teamdata[eachplugin]:
+            compared_data = compare.compare_teams(teamdata[eachplugin][eachteam],masterdata)
+            #passing data for each team and the team name
+            output.output_slack_payload(compared_data, eachteam, config_map["General"]["webhook_url"])
 
 if __name__ == "__main__":
    main(sys.argv[1:])

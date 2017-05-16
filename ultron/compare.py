@@ -1,4 +1,5 @@
 import pprint
+import logging
 
 def id():
     return "compare"
@@ -17,12 +18,15 @@ def compare_environment(team_env,master_env):
 
     if ".master." in master_env:
         if team_env == master_env:
-            return "Matches Master"
+            result = 1
         else:
             if ".master." in team_env:
-                return "Does not match master"
+                result = 2
             else:
-                return "Branch repo"
+                result = 3
+
+    logging.debug("comparing %s and %s result is %s"% (team_env,master_env,result))
+    return result
 
 def compare_teams(t_array,m_array):
 
@@ -32,13 +36,10 @@ def compare_teams(t_array,m_array):
         for mkey in m_array[amaster]:
             for master_info in m_array[amaster][mkey]:
 
-                for ateam in t_array:
-                    for tkey in t_array[ateam]:
-                        for team_info in t_array[ateam][tkey]:
-
-                            team_dot_index = team_info['version'].find('.')
-                            team_version_prefix = team_info['version'][:team_dot_index]
-                            team_version_ending = team_info['version'][team_dot_index:]
+                    for tkey in t_array:
+                            team_dot_index = tkey['version'].find('.')
+                            team_version_prefix = tkey['version'][:team_dot_index]
+                            team_version_ending = tkey['version'][team_dot_index:]
 
                             master_dot_index = master_info['version'].find('.')
                             master_version_prefix = master_info['version'][0:master_dot_index]
@@ -51,10 +52,10 @@ def compare_teams(t_array,m_array):
                                 compared_array.append( {"master_env":master_info['environmentname'],
                                                          "master_version":master_info['version'],
                                                          "master_updateddate":master_info['dateupdated'],
-                                                         "team_env":team_info['environmentname'],
-                                                         "team_version":team_info['version'],
-                                                         "team_updateddate":team_info['dateupdated'],
-                                                         "Match":amatch, "team":tkey})
-
+                                                         "team_env":tkey['environmentname'],
+                                                         "team_version":tkey['version'],
+                                                         "team_updateddate":tkey['dateupdated'],
+                                                         "Match":amatch, "mastername":mkey,
+                                                         "regionname":tkey['regionname']})
     return compared_array
 
