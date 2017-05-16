@@ -20,19 +20,32 @@ def get_themessage(value):
 
 
 def append_to_field(fields, value):
+
+
+    team_dot_index = value['team_version'].find('.')
+    team_version_prefix = value['team_version'][:team_dot_index]
+    team_version_ending = value['team_version'][team_dot_index:]
+
+    master_dot_index = value['master_version'].find('.')
+    master_version_prefix = value['team_version'][0:master_dot_index]
+    master_version_ending = value['team_version'][master_dot_index:]
+
+
     fields.append(
         # adding team data
         {
             "title": "Env: " + value['team_env'],
-            "value": "Ver: " + value['team_version'] + "\nupdated on: "
-                     + value["team_updateddate"].strftime('%m/%d/%Y %H:%M:%S'),
+            "value": "- Ver: "+team_version_prefix
+                     +"\n"+team_version_ending
+                     + "\n- Updated On: "+ value["team_updateddate"].strftime('%m/%d/%Y %H:%M:%S'),
             "short": "true"
         })
     # adding master data
     fields.append({
         'title': "Master Env: " + value['master_env'],
-        'value': "Ver: " + value['master_version'] + "\nupdated on: "
-                 + value["master_updateddate"].strftime('%m/%d/%Y %H:%M:%S'),
+        'value': "- Ver: "+master_version_prefix
+                 + "\n" + master_version_ending
+                 + "\n- Updated On: "+ value["master_updateddate"].strftime('%m/%d/%Y %H:%M:%S'),
         'short': "true"
     })
     return 1
@@ -68,7 +81,7 @@ def output_slack_payload(data_array, teamname, webhook_url):
 
     #append not matching
     if field_not_matching:
-        thetitle = "Environments that are different from Master"
+        thetitle = "Environments different from Master"
         the_color = "#ab3456"
         attachments.append({'title':thetitle,'fields': field_not_matching,'color':the_color})
     #append repos
@@ -78,12 +91,12 @@ def output_slack_payload(data_array, teamname, webhook_url):
         attachments.append({'title': thetitle, 'fields': field_repo, 'color': the_color})
     # append matching
     if field_matching:
-        thetitle = "Environments that match Master"
+        thetitle = "Environments matching Master"
         the_color = "#7bcd8a"
         attachments.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
 
-    pretext = "Region name: " + value["regionname"] + ", " + teamname
-    attachments.insert(0,{'pretext':pretext})
+    pretext = "*Region:* " + value["regionname"] + ", " + teamname
+    attachments.insert(0,{'pretext':pretext, "mrkdwn_in": ["pretext"] })
 
     logging.debug("printing attachments")
     logging.debug(attachments)
@@ -91,7 +104,7 @@ def output_slack_payload(data_array, teamname, webhook_url):
     #creating payload, CHANNEL WILL NEED TO BE DIFFERENT FOR EACH TEAM
     result = {
         'as_user': False,
-        "channel":str(teamname),
+        "channel": str(teamname),
         "attachments":attachments
     }
 
