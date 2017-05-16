@@ -68,17 +68,17 @@ def output_slack_payload(data_array, teamname, webhook_url):
 
     #append not matching
     if field_not_matching:
-        thetitle = "Environments that are different from Master"# + value["mastername"]
+        thetitle = "Environments that are different from Master"
         the_color = "#ab3456"
         attachments.append({'title':thetitle,'fields': field_not_matching,'color':the_color})
     #append repos
     if field_repo:
-        thetitle = "Environments that are branch repositories"# + value["mastername"]
+        thetitle = "Environments that are branch repositories"
         the_color = "#e65c00"
         attachments.append({'title': thetitle, 'fields': field_repo, 'color': the_color})
     # append matching
     if field_matching:
-        thetitle = "Environments that match Master"# + value["mastername"]
+        thetitle = "Environments that match Master"
         the_color = "#7bcd8a"
         attachments.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
 
