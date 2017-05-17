@@ -14,7 +14,7 @@ def get_themessage(value):
     if value == 1:
         return "Matches Master"
     elif value == 2:
-        return "Does not match master"
+        return "Does not match Master"
     elif value == 3:
         return "Branch repo"
 
