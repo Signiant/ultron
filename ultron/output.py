@@ -18,34 +18,48 @@ def get_themessage(value):
     elif value == 3:
         return "Branch repo"
 
+def get_version_output_string(thestring):
 
-def append_to_field(fields, value):
+    team_dot_index = thestring.find('.')
+    team_version_ending = thestring[team_dot_index:]
+    version_isolate = team_version_ending.split('.')
+
+    if version_isolate[-2].isdigit():
+        e_str = ('.').join(version_isolate[:-1])
+    elif version_isolate[-3].isdigit():
+        e_str = ('.').join(version_isolate[:-2])
+    else:
+        e_str = ('.').join(version_isolate[:-1])
+
+    return e_str[1:]
 
 
-    team_dot_index = value['team_version'].find('.')
-    team_version_prefix = value['team_version'][:team_dot_index]
-    team_version_ending = value['team_version'][team_dot_index:]
+def append_to_field(fields, value, match_type):
 
-    master_dot_index = value['master_version'].find('.')
-    master_version_prefix = value['team_version'][0:master_dot_index]
-    master_version_ending = value['team_version'][master_dot_index:]
+    team_version_ending = get_version_output_string(value['team_version'])
+    master_version_ending = get_version_output_string(value['master_version'])
+
+    if match_type == 1:
+        emojicon = ":relaxed:"
+    elif match_type == 2:
+        emojicon = ":cry:"
+    elif match_type == 3:
+        emojicon = ":thinking_face: "
 
 
     fields.append(
         # adding team data
         {
-            "title": "Env: " + value['team_env'],
-            "value": "- Ver: "+team_version_prefix
-                     +"\n"+team_version_ending
-                     + "\n- Updated On: "+ value["team_updateddate"].strftime('%m/%d/%Y %H:%M:%S'),
+            "title": "\n\nenv:  " + value['team_env'],
+            "value": emojicon+" ver: "+team_version_ending
+                     + "\nUpdated On: "+ value["team_updateddate"].strftime('%m/%d/%Y %H:%M:%S'),
             "short": "true"
         })
     # adding master data
     fields.append({
-        'title': "Master Env: " + value['master_env'],
-        'value': "- Ver: "+master_version_prefix
-                 + "\n" + master_version_ending
-                 + "\n- Updated On: "+ value["master_updateddate"].strftime('%m/%d/%Y %H:%M:%S'),
+        'title': "\n\n"+value['mastername']+" env: " + value['master_env'],
+        'value': emojicon+" ver: "+ master_version_ending
+                 + "\nUpdated On: "+ value["master_updateddate"].strftime('%m/%d/%Y %H:%M:%S'),
         'short': "true"
     })
     return 1
@@ -72,28 +86,30 @@ def output_slack_payload(data_array, teamname, webhook_url):
     logging.debug(data_array)
 
     for value in data_array:
+        themaster = value['mastername']
         if value["Match"] == 1:
-            append_to_field(field_matching, value)
+            append_to_field(field_matching, value, value["Match"])
         if value["Match"] == 2:
-            append_to_field(field_not_matching, value)
+            append_to_field(field_not_matching, value, value["Match"])
         if value["Match"] == 3:
-            append_to_field(field_repo, value)
+            append_to_field(field_repo, value, value["Match"])
 
     #append not matching
     if field_not_matching:
-        thetitle = "Environments different from Master"
-        the_color = "#ab3456"
+        thetitle = "Beanstalk environments not matching "+themaster
+        the_color = "#ec1010"
         attachments.append({'title':thetitle,'fields': field_not_matching,'color':the_color})
     #append repos
     if field_repo:
-        thetitle = "Environments that are branch repositories"
-        the_color = "#e65c00"
+        thetitle = "Beanstalk environments running dev branches"
+        the_color = "#fef65b"
         attachments.append({'title': thetitle, 'fields': field_repo, 'color': the_color})
     # append matching
     if field_matching:
-        thetitle = "Environments matching Master"
+        thetitle = "Beanstalk environments matching " + themaster
         the_color = "#7bcd8a"
         attachments.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
+
 
     pretext = "*Region:* " + value["regionname"] + ", " + teamname
     attachments.insert(0,{'pretext':pretext, "mrkdwn_in": ["pretext"] })
@@ -101,10 +117,12 @@ def output_slack_payload(data_array, teamname, webhook_url):
     logging.debug("printing attachments")
     logging.debug(attachments)
 
+    pprint.pprint(attachments)
+
     #creating payload, CHANNEL WILL NEED TO BE DIFFERENT FOR EACH TEAM
     result = {
         'as_user': False,
-        "channel": str(teamname),
+        "channel":str(teamname),
         "attachments":attachments
     }
 
