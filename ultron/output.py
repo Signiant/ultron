@@ -18,53 +18,6 @@ def get_themessage(value):
     elif value == 3:
         return "Branch repo"
 
-def get_version_output_string(thestring):
-
-    team_dot_index = thestring.find('.')
-    team_version_ending = thestring[team_dot_index:]
-    version_isolate = team_version_ending.split('.')
-
-    if version_isolate[-2].isdigit():
-        e_str = ('.').join(version_isolate[:-1])
-    elif version_isolate[-3].isdigit():
-        e_str = ('.').join(version_isolate[:-2])
-    else:
-        e_str = ('.').join(version_isolate[:-1])
-
-    return e_str[1:]
-
-
-def append_to_field(fields, value, match_type):
-
-    team_version_ending = get_version_output_string(value['team_version'])
-    master_version_ending = get_version_output_string(value['master_version'])
-
-    if match_type == 1:
-        emojicon = ":relaxed:"
-    elif match_type == 2:
-        emojicon = ":cry:"
-    elif match_type == 3:
-        emojicon = ":thinking_face: "
-
-
-    fields.append(
-        # adding team data
-        {
-            "title": "\n\nenv:  " + value['team_env'],
-            "value": emojicon+" ver: "+team_version_ending
-                     + "\nUpdated On: "+ value["team_updateddate"].strftime('%m/%d/%Y %H:%M:%S'),
-            "short": "true"
-        })
-    # adding master data
-    fields.append({
-        'title': "\n\n"+value['mastername']+" env: " + value['master_env'],
-        'value': emojicon+" ver: "+ master_version_ending
-                 + "\nUpdated On: "+ value["master_updateddate"].strftime('%m/%d/%Y %H:%M:%S'),
-        'short': "true"
-    })
-    return 1
-
-
 def display_results(data_array):
 
     for value in data_array:
@@ -75,7 +28,43 @@ def display_results(data_array):
               + "master updated on "+ value["team_updateddate"].strftime('%m/%d/%Y %H:%M:%S')
               +" === "+ themessage+"\n")
 
-def output_slack_payload(data_array, teamname, webhook_url):
+def form_the_time(thetime):
+
+    if thetime == "":
+        time_updated =""
+    else:
+        time_updated = thetime.strftime('%m/%d/%Y %H:%M:%S')
+
+    return time_updated
+
+
+def append_to_field(fields, value, match_type):
+
+    if match_type == 1:
+        emojicon = ":relaxed:"
+    elif match_type == 2:
+        emojicon = ":cry:"
+    elif match_type == 3:
+        emojicon = ":thinking_face: "
+
+    fields.append(
+        # adding team data
+        {
+            "title": "\n\nenv:  " + value['team_env'],
+            "value": emojicon+" ver: "+value['team_version']
+                     + "\nUpdated On: "+ form_the_time(value["team_updateddate"]),
+            "short": "true"
+        })
+    # adding master data
+    fields.append({
+        'title': "\n\n"+value['mastername']+" env: " + value['master_env'],
+        'value': emojicon+" ver: "+ value['master_version']
+                 + "\nUpdated On: "+ form_the_time(value["team_updateddate"]),
+        'short': "true"
+    })
+    return 1
+
+def output_slack_payload(data_array, teamname, webhook_url, eachplugin):
 
     attachments = []
     field_matching = []
@@ -94,19 +83,24 @@ def output_slack_payload(data_array, teamname, webhook_url):
         if value["Match"] == 3:
             append_to_field(field_repo, value, value["Match"])
 
+    if eachplugin == "eb":
+        thetitle_beginning = "Beanstalk"
+    elif eachplugin == "ecs":
+        thetitle_beginning = "ECS"
+
     #append not matching
     if field_not_matching:
-        thetitle = "Beanstalk environments not matching "+themaster
+        thetitle = thetitle_beginning+" environments not matching "+themaster
         the_color = "#ec1010"
         attachments.append({'title':thetitle,'fields': field_not_matching,'color':the_color})
     #append repos
     if field_repo:
-        thetitle = "Beanstalk environments running dev branches"
+        thetitle = thetitle_beginning+"Beanstalk environments running dev branches"
         the_color = "#fef65b"
         attachments.append({'title': thetitle, 'fields': field_repo, 'color': the_color})
     # append matching
     if field_matching:
-        thetitle = "Beanstalk environments matching " + themaster
+        thetitle = thetitle_beginning+"Beanstalk environments matching " + themaster
         the_color = "#7bcd8a"
         attachments.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
 
@@ -119,10 +113,11 @@ def output_slack_payload(data_array, teamname, webhook_url):
 
     pprint.pprint(attachments)
 
+
     #creating payload, CHANNEL WILL NEED TO BE DIFFERENT FOR EACH TEAM
     result = {
         'as_user': False,
-        "channel":str(teamname),
+        "channel":"#slack-testing",
         "attachments":attachments
     }
 
@@ -136,7 +131,7 @@ def output_slack_payload(data_array, teamname, webhook_url):
             'Slack returned status code %s, the response text is %s'%(response.status_code,response.text)
         )
 
-    return  response.status_code
+    return  1#response.status_code
 
 
 

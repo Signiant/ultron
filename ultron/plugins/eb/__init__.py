@@ -59,7 +59,7 @@ def get_r53_alias_entry(query_name,zoneid, current_session):
 
     return endpoint
 
-def check_versions(profile_name, region_name, chealth, env_array, onlyiflive):
+def eb_check_versions(profile_name, region_name, chealth, env_array, onlyiflive):
 
     mysession = boto3.session.Session(profile_name=profile_name, region_name=region_name)
     client = mysession.client('elasticbeanstalk')

@@ -77,17 +77,23 @@ def main(argv):
                 plugin_handle = plugin.loadPlugin(plugin_name)
 
                 try:
-                    plugin_data = plugin_handle.check_versions(team_list[team]['profile_name'], aplugin['region_name'],
-                                                           aplugin['onlycheckifhealthy'], aplugin['environments'],
-                                                           aplugin['onlylive'])
+                    if plugin_name == "eb":
+                        plugin_data = plugin_handle.eb_check_versions(team_list[team]['profile_name'], aplugin['region_name'],
+                                                               aplugin['onlycheckifhealthy'], aplugin['environments'],
+                                                               aplugin['onlylive'])
+
+                    elif plugin_name == "ecs":
+                        plugin_data = plugin_handle.ecs_check_versions(team_list[team]['profile_name'], aplugin['region_name'],
+                                                               aplugin['cluster_name'])
+
                     logging.debug(plugin_data)
                     # Store the plugin output in a dict
                     if team_list[team]["master"]:
-                        mdata[team] = plugin_data
-                        masterdata[plugin_name] = mdata
+                        mdata[plugin_name] = plugin_data
+                        masterdata[team] = mdata
                     else:
-                        tdata[team] = plugin_data
-                        teamdata[plugin_name] = tdata
+                        tdata[plugin_name] = plugin_data
+                        teamdata[team] = tdata
 
                 except Exception, e:
                     print str(e)
@@ -95,11 +101,13 @@ def main(argv):
     logging.debug(masterdata)
     logging.debug(teamdata)
 
-    for eachplugin in teamdata:
-        for eachteam in teamdata[eachplugin]:
-            compared_data = compare.compare_teams(teamdata[eachplugin][eachteam],masterdata)
+
+    for eachteam in teamdata:
+        for eachplugin in teamdata[eachteam]:
+            compared_data = compare.compare_teams(teamdata[eachteam][eachplugin],masterdata, eachplugin)
             #passing data for each team and the team name
-            output.output_slack_payload(compared_data, eachteam, config_map["General"]["webhook_url"])
+            output.output_slack_payload(compared_data, eachteam, config_map["General"]["webhook_url"], eachplugin)
+
 
 if __name__ == "__main__":
    main(sys.argv[1:])
