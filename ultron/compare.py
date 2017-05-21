@@ -7,6 +7,7 @@ def id():
 def log(message):
     print id() + ": " + message
 
+#version print out for eb environments
 def get_version_output_string(thestring):
 
     team_dot_index = thestring.find('.')
@@ -22,6 +23,25 @@ def get_version_output_string(thestring):
 
     return e_str[1:]
 
+#shorten versions if they are too long
+def prepare_final_version(thestring):
+
+    if len(thestring) > 25:
+        thestring = thestring[:25]+"..."
+        return thestring
+    else:
+        return thestring
+
+
+#extract the second part of service name to compare
+def get_service_name_ending(thestring):
+    slash_index = thestring.find('/')
+    thestring = thestring[(slash_index+1):]
+    slash_index = thestring.find('-')
+    thestring = thestring[(slash_index + 1):]
+    return thestring.replace('.json',"")
+
+#Main comparing function
 def compare_environment(team_env,master_env, eachplugin):
 
     """""
@@ -49,68 +69,80 @@ def compare_environment(team_env,master_env, eachplugin):
     logging.debug("comparing %s and %s result is %s"% (team_env,master_env,result))
     return result
 
+
+
 def compare_teams(t_array,m_array, eachplugin):
 
     compared_array = []
 
-    for amaster in m_array:
-        for mkey in m_array[amaster]:
+    for mkey in m_array:
+        for mastername in mkey:
+            for masterplugin in mkey[mastername]:
+                for m_data in mkey[mastername][masterplugin]:
 
-            if eachplugin == "eb":
-                for master_info in m_array[amaster][mkey]:
+                    if eachplugin == "eb" and masterplugin == "eb":
                         for tkey in t_array:
+                            logging.debug(tkey['regionname'] +" "+tkey['version'])
 
-                                team_dot_index = tkey['version'].find('.')
-                                team_version_prefix = tkey['version'][:team_dot_index]
-                                team_version_ending = tkey['version'][team_dot_index:]
-
-                                master_dot_index = master_info['version'].find('.')
-                                master_version_prefix = master_info['version'][0:master_dot_index]
-                                master_version_ending = master_info['version'][master_dot_index:]
-
-                                if team_version_prefix == master_version_prefix:
-
-                                    amatch = compare_environment(team_version_ending, master_version_ending, eachplugin)
-
-                                    #formatting versions
-                                    master_version_entry = get_version_output_string(master_info['version'])
-                                    team_version_entry = get_version_output_string(tkey['version'])
-
-                                    compared_array.append( {"master_env":master_info['environmentname'],
-                                                             "master_version": master_version_entry,
-                                                             "master_updateddate":master_info['dateupdated'],
-                                                             "team_env":tkey['environmentname'],
-                                                             "team_version": team_version_entry,
-                                                             "team_updateddate":tkey['dateupdated'],
-                                                             "Match":amatch, "mastername": amaster,
-                                                             "regionname":tkey['regionname']})
-
-            elif eachplugin == "ecs":
-                for master_info in m_array[amaster][mkey]:
-                    for tkey in t_array:
-                            team_dot_index = tkey['version'].find(':')
+                            team_dot_index = tkey['version'].find('.')
                             team_version_prefix = tkey['version'][:team_dot_index]
                             team_version_ending = tkey['version'][team_dot_index:]
 
-                            master_dot_index = master_info['version'].find(':')
-                            master_version_prefix = master_info['version'][0:master_dot_index]
-                            master_version_ending = master_info['version'][master_dot_index:]
+                            master_dot_index = m_data['version'].find('.')
+                            master_version_prefix = m_data['version'][0:master_dot_index]
+                            master_version_ending = m_data['version'][master_dot_index:]
+
 
                             if team_version_prefix == master_version_prefix:
 
                                 amatch = compare_environment(team_version_ending, master_version_ending, eachplugin)
 
-                                compared_array.append( {"master_env":master_version_prefix,
-                                                         "master_version":master_version_ending,
-                                                         "master_updateddate":"",
-                                                         "team_env": team_version_prefix,
-                                                         "team_version": team_version_ending,
-                                                         "team_updateddate":"",
-                                                         "Match":amatch, "mastername": amaster,
+                                #formatting versions
+                                master_version_entry = get_version_output_string(m_data['version'])
+                                team_version_entry = get_version_output_string(tkey['version'])
+
+                                compared_array.append( {"master_env":m_data['environmentname'],
+                                                         "master_version": master_version_entry,
+                                                         "master_updateddate":m_data['dateupdated'],
+                                                         "team_env":tkey['environmentname'],
+                                                         "team_version": team_version_entry,
+                                                         "team_updateddate":tkey['dateupdated'],
+                                                         "Match":amatch, "mastername": mastername,
                                                          "regionname":tkey['regionname']})
 
+                    elif eachplugin == "ecs" and masterplugin == "ecs":
+                        for tkey in t_array:
 
-    #pprint.pprint(compared_array)
+                            logging.debug( "original team " + get_service_name_ending(tkey["servicename"]) \
+                                                   + "----------- original master " + get_service_name_ending(m_data["servicename"]))
+                            if get_service_name_ending(tkey["servicename"]) == get_service_name_ending(m_data["servicename"]):
+                                logging.debug( "matched")
+                                tkey_edited = tkey['version'].replace("signiant/","")
+                                team_dot_index = tkey_edited.find(':')
+                                team_version_prefix = tkey_edited[:team_dot_index]
+                                team_version_ending = tkey_edited[(team_dot_index+1):]
+
+                                master_dot_index = m_data['version'].find(':')
+                                master_version_prefix = m_data['version'][0:master_dot_index]
+                                master_version_ending = m_data['version'][(master_dot_index+1):]
+
+                                print team_version_prefix +" == "+ master_version_prefix
+                                if team_version_prefix == master_version_prefix:
+
+                                    amatch = compare_environment(team_version_ending, master_version_ending, eachplugin)
+                                    logging.debug( team_version_ending+ " === " +master_version_ending+"\n" )
+
+                                    compared_array.append( {"master_env": get_service_name_ending(m_data["servicename"]),
+                                                             "master_version": m_data['version'].replace("signiant/",""),
+                                                             "master_updateddate":"",
+                                                             "team_env": get_service_name_ending(tkey["servicename"]),
+                                                             "team_version": tkey['version'].replace("signiant/",""),
+                                                             "team_updateddate":"",
+                                                             "Match":amatch, "mastername": mastername,
+                                                             "regionname":tkey['regionname']})
+
+
+    pprint.pprint(compared_array)
 
     return compared_array
 

@@ -26,11 +26,9 @@ def read_config_file(path):
 #main
 def main(argv):
 
-    mdata = dict()
-    masterdata = dict()
+    masterdata = []
 
-    tdata = dict()
-    teamdata = dict()
+    teamdata = []
 
     log_level = logging.INFO
 
@@ -81,32 +79,27 @@ def main(argv):
                         plugin_data = plugin_handle.eb_check_versions(team_list[team]['profile_name'], aplugin['region_name'],
                                                                aplugin['onlycheckifhealthy'], aplugin['environments'],
                                                                aplugin['onlylive'])
-
                     elif plugin_name == "ecs":
                         plugin_data = plugin_handle.ecs_check_versions(team_list[team]['profile_name'], aplugin['region_name'],
                                                                aplugin['cluster_name'])
-
                     logging.debug(plugin_data)
-                    # Store the plugin output in a dict
+                    # Store the plugin output in an array
                     if team_list[team]["master"]:
-                        mdata[plugin_name] = plugin_data
-                        masterdata[team] = mdata
+                        masterdata.append({team: {plugin_name: plugin_data}})
                     else:
-                        tdata[plugin_name] = plugin_data
-                        teamdata[team] = tdata
-
+                        teamdata.append({team : { plugin_name : plugin_data }})
                 except Exception, e:
                     print str(e)
 
     logging.debug(masterdata)
     logging.debug(teamdata)
 
-
-    for eachteam in teamdata:
-        for eachplugin in teamdata[eachteam]:
-            compared_data = compare.compare_teams(teamdata[eachteam][eachplugin],masterdata, eachplugin)
-            #passing data for each team and the team name
-            output.output_slack_payload(compared_data, eachteam, config_map["General"]["webhook_url"], eachplugin)
+    for indteam in teamdata:
+        for theteam in indteam:
+            for theplugin in indteam[theteam]:
+                compared_data = compare.compare_teams(indteam[theteam][theplugin],masterdata, theplugin)
+                #passing data for each team and the team name
+                output.output_slack_payload(compared_data, config_map["General"]["webhook_url"], theplugin, theteam)
 
 
 if __name__ == "__main__":

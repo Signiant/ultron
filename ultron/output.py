@@ -33,10 +33,25 @@ def form_the_time(thetime):
     if thetime == "":
         time_updated =""
     else:
-        time_updated = thetime.strftime('%m/%d/%Y %H:%M:%S')
+        time_updated = "\nUpdated On: "+thetime.strftime('%m/%d/%Y %H:%M:%S')
 
     return time_updated
 
+def shorten_input(thestring):
+    if len(thestring) > 30:
+        thestring = thestring[:20]+"..."
+        return thestring
+    else:
+        return thestring
+
+def format_version(thestring):
+    if thestring.find(":") != -1:
+        colon_index = thestring.find(":")
+        outputstring = "ver: "+thestring[:colon_index]+"\nver#: "+thestring[(colon_index+1):]
+        return outputstring
+    else:
+        thestring = "ver: "+thestring
+        return thestring
 
 def append_to_field(fields, value, match_type):
 
@@ -47,24 +62,26 @@ def append_to_field(fields, value, match_type):
     elif match_type == 3:
         emojicon = ":thinking_face: "
 
-    fields.append(
+    fields.append({
         # adding team data
-        {
-            "title": "\n\nenv:  " + value['team_env'],
-            "value": emojicon+" ver: "+value['team_version']
-                     + "\nUpdated On: "+ form_the_time(value["team_updateddate"]),
+            "title": "\n\n" +shorten_input(value['team_env']),
+            "value": emojicon+format_version(value['team_version'])
+                     + form_the_time(value["team_updateddate"]),
             "short": "true"
         })
     # adding master data
     fields.append({
-        'title': "\n\n"+value['mastername']+" env: " + value['master_env'],
-        'value': emojicon+" ver: "+ value['master_version']
-                 + "\nUpdated On: "+ form_the_time(value["team_updateddate"]),
+
+
+        #removed from title --> value['mastername']+" env: "
+        'title': "\n\n"+ shorten_input(value['master_env']),
+        'value': emojicon+format_version(value['master_version'])
+                 + form_the_time(value["team_updateddate"]),
         'short': "true"
     })
     return 1
 
-def output_slack_payload(data_array, teamname, webhook_url, eachplugin):
+def output_slack_payload(data_array, webhook_url, eachplugin, eachteam):
 
     attachments = []
     field_matching = []
@@ -84,28 +101,27 @@ def output_slack_payload(data_array, teamname, webhook_url, eachplugin):
             append_to_field(field_repo, value, value["Match"])
 
     if eachplugin == "eb":
-        thetitle_beginning = "Beanstalk"
+        thetitle_beginning = "Beanstalk environments"
     elif eachplugin == "ecs":
-        thetitle_beginning = "ECS"
+        thetitle_beginning = "ECS services"
 
     #append not matching
     if field_not_matching:
-        thetitle = thetitle_beginning+" environments not matching "+themaster
+        thetitle = thetitle_beginning+"  not matching "+themaster
         the_color = "#ec1010"
         attachments.append({'title':thetitle,'fields': field_not_matching,'color':the_color})
     #append repos
     if field_repo:
-        thetitle = thetitle_beginning+"Beanstalk environments running dev branches"
+        thetitle = thetitle_beginning+" running dev branches"
         the_color = "#fef65b"
         attachments.append({'title': thetitle, 'fields': field_repo, 'color': the_color})
     # append matching
     if field_matching:
-        thetitle = thetitle_beginning+"Beanstalk environments matching " + themaster
+        thetitle = thetitle_beginning+" matching " + themaster
         the_color = "#7bcd8a"
         attachments.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
 
-
-    pretext = "*Region:* " + value["regionname"] + ", " + teamname
+    pretext = "*Region:* " + value["regionname"] + ", " + eachteam
     attachments.insert(0,{'pretext':pretext, "mrkdwn_in": ["pretext"] })
 
     logging.debug("printing attachments")
@@ -117,7 +133,7 @@ def output_slack_payload(data_array, teamname, webhook_url, eachplugin):
     #creating payload, CHANNEL WILL NEED TO BE DIFFERENT FOR EACH TEAM
     result = {
         'as_user': False,
-        "channel":"#slack-testing",
+        "channel": str(eachteam),
         "attachments":attachments
     }
 
@@ -130,6 +146,7 @@ def output_slack_payload(data_array, teamname, webhook_url, eachplugin):
         raise ValueError(
             'Slack returned status code %s, the response text is %s'%(response.status_code,response.text)
         )
+
 
     return  1#response.status_code
 
