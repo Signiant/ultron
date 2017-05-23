@@ -186,14 +186,5 @@ def output_slack_payload(data_array, webhook_url, eachteam):
             'Slack returned status code %s, the response text is %s'%(response.status_code,response.text)
         )
 
-    return  1#response.status_code
-
-
-
-
-
-
-
-
-
+    return  response.status_code
 

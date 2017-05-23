@@ -19,6 +19,8 @@ def ecs_check_versions(profile_name, region_name, cluster_name,slack_channel):
         service_iterator = service_paginator.paginate(cluster=cluster_name)
     except Exception, e:
         print("Error obtaining list of ECS services for " + cluster_name + " (" + str(e) + ")")
+    except KeyError, e:
+        print "Key " + e + "not found"
 
     try:
         for service in service_iterator:

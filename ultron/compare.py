@@ -23,16 +23,6 @@ def get_version_output_string(thestring):
 
     return e_str[1:]
 
-#shorten versions if they are too long
-def prepare_final_version(thestring):
-
-    if len(thestring) > 25:
-        thestring = thestring[:25]+"..."
-        return thestring
-    else:
-        return thestring
-
-
 #extract the second part of service name to compare
 def get_service_name_ending(thestring):
     slash_index = thestring.find('/')
@@ -69,6 +59,12 @@ def compare_environment(team_env,master_env, eachplugin):
     logging.debug("comparing %s and %s result is %s"% (team_env,master_env,result))
     return result
 
+
+def does_key_exist(thearray,thestring):
+    if thearray[thestring]:
+        return thearray[thestring]
+    else:
+        return ""
 
 
 def compare_teams(t_array,m_array):
@@ -113,7 +109,7 @@ def compare_teams(t_array,m_array):
                                          "team_updateddate":tkey['dateupdated'],
                                          "Match":amatch, "mastername": eachmaster,
                                          "regionname":tkey['regionname'],
-                                         "slackchannel":tkey['slackchannel'],
+                                         "slackchannel": does_key_exist(tkey,'slackchannel'),
                                          "pluginname": eachteamplugin
                                         })
 
@@ -148,7 +144,7 @@ def compare_teams(t_array,m_array):
                                              "team_updateddate":"",
                                              "Match":amatch, "mastername": eachmaster,
                                              "regionname":tkey['regionname'],
-                                             "slackchannel": tkey['slackchannel'],
+                                             "slackchannel": does_key_exist(tkey,'slackchannel'),
                                              "pluginname": eachteamplugin
                                             })
 

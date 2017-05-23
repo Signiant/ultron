@@ -21,6 +21,8 @@ def get_env_elb(envname,region, current_session):
         )
     except Exception, e:
         log("Error describing the EB environment resources for " + envname + " (" + str(e) + ")")
+    except KeyError, e:
+        print "Key " + e + "not found"
 
     if response:
         # Eb only uses a single load balancer so grab the first
@@ -56,6 +58,8 @@ def get_r53_alias_entry(query_name,zoneid, current_session):
             endpoint = response['ResourceRecordSets'][0]['AliasTarget']['DNSName']
     except Exception, e:
         print str(e)
+    except KeyError, e:
+        print "Key " + e + "not found"
 
     return endpoint
 
@@ -89,7 +93,6 @@ def eb_check_versions(profile_name, region_name, chealth, env_array, onlyiflive,
                 logging.debug("version label is %s app is %s environment is %s\n areas is %s checking app %s" % (
                 c_version, c_app, c_env, areas, c_app))
 
-
             #revert to "for areas in c_app if irregularities occur in matches"
             current_application_name =  c_app.replace(" ","").lower()
             current_application_keyword = areas.replace(" ","").lower()
@@ -122,7 +125,4 @@ def eb_check_versions(profile_name, region_name, chealth, env_array, onlyiflive,
                         appversions.append(c_appversion)
 
     return appversions
-
-
-
 

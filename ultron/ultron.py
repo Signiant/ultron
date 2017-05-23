@@ -99,6 +99,11 @@ def main(argv):
                             teamdata[team] = ({ plugin_name : plugin_data })
                 except Exception, e:
                     print str(e)
+                except EOFError, e:
+                    print "End of file reached and value "+e+" not found"
+                except KeyError, e:
+                    print "Key "+e+"not found"
+
 
     logging.debug(masterdata)
     logging.debug(teamdata)
