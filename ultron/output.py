@@ -1,7 +1,5 @@
 import pprint
-from operator import itemgetter
 import requests
-import json
 import logging
 
 def id():
@@ -28,6 +26,19 @@ def display_results(data_array):
               + "master updated on "+ value["team_updateddate"].strftime('%m/%d/%Y %H:%M:%S')
               +" === "+ themessage+"\n")
 
+def add_indent_fields(fields):
+    fields.append({
+            "title": "",
+            "value": "",
+            "short": "true"
+        })
+    fields.append({
+        'title': "",
+        'value': "",
+        'short': "true"
+    })
+    return 1
+
 def form_the_time(thetime):
 
     if thetime == "":
@@ -37,24 +48,27 @@ def form_the_time(thetime):
 
     return time_updated
 
+
 def shorten_input(thestring):
     if len(thestring) > 30:
-        thestring = thestring[:20]+"..."
+        thestring = thestring[:27]+"..."
         return thestring
     else:
         return thestring
 
+
+#format the version info displayed depending on ecs or eb data
 def format_version(thestring):
     if thestring.find(":") != -1:
         colon_index = thestring.find(":")
-        outputstring = "ver: "+thestring[:colon_index]+"\nver#: "+thestring[(colon_index+1):]
+        outputstring = shorten_input("ver: "+thestring[:colon_index])+"\nver#: "+thestring[(colon_index+1):]
         return outputstring
     else:
         thestring = "ver: "+thestring
         return thestring
 
-def append_to_field(fields, value, match_type):
-
+#adding emojis to fields
+def append_to_field(fields, value, match_type, mastername):
     if match_type == 1:
         emojicon = ":relaxed:"
     elif match_type == 2:
@@ -64,64 +78,89 @@ def append_to_field(fields, value, match_type):
 
     fields.append({
         # adding team data
-            "title": "\n\n" +shorten_input(value['team_env']),
-            "value": emojicon+format_version(value['team_version'])
+            "title": "\n\n"+emojicon+shorten_input(value['team_env']),
+            "value": format_version(value['team_version'])
                      + form_the_time(value["team_updateddate"]),
             "short": "true"
         })
-    # adding master data
+
     fields.append({
-
-
-        #removed from title --> value['mastername']+" env: "
-        'title': "\n\n"+ shorten_input(value['master_env']),
-        'value': emojicon+format_version(value['master_version'])
+        # adding master data
+        'title': "\n\n"+emojicon+shorten_input(mastername+": "+value['master_env']),
+        'value': format_version(value['master_version'])
                  + form_the_time(value["team_updateddate"]),
         'short': "true"
     })
+
+    add_indent_fields(fields)
+    add_indent_fields(fields)
+
     return 1
 
-def output_slack_payload(data_array, webhook_url, eachplugin, eachteam):
+#create attachment for each plugin
+def create_plugin_format(data_array,theplugin, theattachment, thetitle_beginning):
 
-    attachments = []
     field_matching = []
     field_not_matching = []
     field_repo = []
 
+    some_data = []
+
+    for value in data_array[theplugin]:
+        if value["Match"] == 1:
+            append_to_field(field_matching, value, value["Match"], value['mastername'])
+        if value["Match"] == 2:
+            append_to_field(field_not_matching, value, value["Match"], value['mastername'])
+        if value["Match"] == 3:
+            append_to_field(field_repo, value, value["Match"], value['mastername'])
+
+    # append not matching
+    if field_not_matching:
+        thetitle = thetitle_beginning + "  not matching " + value['mastername']
+        the_color = "#ec1010"
+        theattachment.append({'title': thetitle, 'fields': field_not_matching, 'color': the_color})
+    # append repos
+    if field_repo:
+        thetitle = thetitle_beginning + " running dev branches"
+        the_color = "#fef65b"
+        theattachment.append({'title': thetitle, 'fields': field_repo, 'color': the_color})
+    # append matching
+    if field_matching:
+        thetitle = thetitle_beginning + " matching " + value['mastername']
+        the_color = "#7bcd8a"
+        theattachment.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
+
+    some_data.append(value['slackchannel'])
+    some_data.append(value['regionname'])
+
+    return some_data
+
+
+#main output to slack function
+def output_slack_payload(data_array, webhook_url, eachteam):
+
+    attachments = []
+
+    eb_attachments = []
+    ecs_attachments = []
+
+    required_data = []
+
     logging.debug("printing data array in output_slack_payload")
     logging.debug(data_array)
 
-    for value in data_array:
-        themaster = value['mastername']
-        if value["Match"] == 1:
-            append_to_field(field_matching, value, value["Match"])
-        if value["Match"] == 2:
-            append_to_field(field_not_matching, value, value["Match"])
-        if value["Match"] == 3:
-            append_to_field(field_repo, value, value["Match"])
+    for theplugin in data_array:
+        if theplugin == "eb":
+            required_data = create_plugin_format(data_array,theplugin, eb_attachments,"Beanstalk environments")
+        elif theplugin == "ecs":
+            required_data = create_plugin_format(data_array, theplugin, ecs_attachments,"ECS services")
 
-    if eachplugin == "eb":
-        thetitle_beginning = "Beanstalk environments"
-    elif eachplugin == "ecs":
-        thetitle_beginning = "ECS services"
+    attachments = eb_attachments + ecs_attachments
 
-    #append not matching
-    if field_not_matching:
-        thetitle = thetitle_beginning+"  not matching "+themaster
-        the_color = "#ec1010"
-        attachments.append({'title':thetitle,'fields': field_not_matching,'color':the_color})
-    #append repos
-    if field_repo:
-        thetitle = thetitle_beginning+" running dev branches"
-        the_color = "#fef65b"
-        attachments.append({'title': thetitle, 'fields': field_repo, 'color': the_color})
-    # append matching
-    if field_matching:
-        thetitle = thetitle_beginning+" matching " + themaster
-        the_color = "#7bcd8a"
-        attachments.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
+    theregionname = required_data[1]
+    theslackchannel = required_data[0]
 
-    pretext = "*Region:* " + value["regionname"] + ", " + eachteam
+    pretext = "*Region:* " + theregionname + ", " + eachteam
     attachments.insert(0,{'pretext':pretext, "mrkdwn_in": ["pretext"] })
 
     logging.debug("printing attachments")
@@ -133,7 +172,7 @@ def output_slack_payload(data_array, webhook_url, eachplugin, eachteam):
     #creating payload, CHANNEL WILL NEED TO BE DIFFERENT FOR EACH TEAM
     result = {
         'as_user': False,
-        "channel": str(eachteam),
+        "channel": theslackchannel,
         "attachments":attachments
     }
 
@@ -146,7 +185,6 @@ def output_slack_payload(data_array, webhook_url, eachplugin, eachteam):
         raise ValueError(
             'Slack returned status code %s, the response text is %s'%(response.status_code,response.text)
         )
-
 
     return  1#response.status_code
 

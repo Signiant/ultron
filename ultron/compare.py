@@ -71,17 +71,20 @@ def compare_environment(team_env,master_env, eachplugin):
 
 
 
-def compare_teams(t_array,m_array, eachplugin):
+def compare_teams(t_array,m_array):
 
-    compared_array = []
+    compared_array = {}
+    eb_data = []
+    ecs_data = []
 
-    for mkey in m_array:
-        for mastername in mkey:
-            for masterplugin in mkey[mastername]:
-                for m_data in mkey[mastername][masterplugin]:
+    for eachmaster in m_array:
+        for eachmasterplugin in m_array[eachmaster]:
+            for m_data in m_array[eachmaster][eachmasterplugin]:
 
-                    if eachplugin == "eb" and masterplugin == "eb":
-                        for tkey in t_array:
+                for eachteamplugin in t_array:
+
+                    if eachmasterplugin == "eb" and eachteamplugin == "eb":
+                        for tkey in t_array[eachteamplugin]:
                             logging.debug(tkey['regionname'] +" "+tkey['version'])
 
                             team_dot_index = tkey['version'].find('.')
@@ -95,23 +98,27 @@ def compare_teams(t_array,m_array, eachplugin):
 
                             if team_version_prefix == master_version_prefix:
 
-                                amatch = compare_environment(team_version_ending, master_version_ending, eachplugin)
+                                amatch = compare_environment(team_version_ending, master_version_ending, eachteamplugin)
 
                                 #formatting versions
                                 master_version_entry = get_version_output_string(m_data['version'])
                                 team_version_entry = get_version_output_string(tkey['version'])
 
-                                compared_array.append( {"master_env":m_data['environmentname'],
-                                                         "master_version": master_version_entry,
-                                                         "master_updateddate":m_data['dateupdated'],
-                                                         "team_env":tkey['environmentname'],
-                                                         "team_version": team_version_entry,
-                                                         "team_updateddate":tkey['dateupdated'],
-                                                         "Match":amatch, "mastername": mastername,
-                                                         "regionname":tkey['regionname']})
 
-                    elif eachplugin == "ecs" and masterplugin == "ecs":
-                        for tkey in t_array:
+                                eb_data.append({"master_env":m_data['environmentname'],
+                                         "master_version": master_version_entry,
+                                         "master_updateddate":m_data['dateupdated'],
+                                         "team_env":tkey['environmentname'],
+                                         "team_version": team_version_entry,
+                                         "team_updateddate":tkey['dateupdated'],
+                                         "Match":amatch, "mastername": eachmaster,
+                                         "regionname":tkey['regionname'],
+                                         "slackchannel":tkey['slackchannel'],
+                                         "pluginname": eachteamplugin
+                                        })
+
+                    elif eachmasterplugin == "ecs" and eachteamplugin == "ecs":
+                        for tkey in t_array[eachteamplugin]:
 
                             logging.debug( "original team " + get_service_name_ending(tkey["servicename"]) \
                                                    + "----------- original master " + get_service_name_ending(m_data["servicename"]))
@@ -126,23 +133,30 @@ def compare_teams(t_array,m_array, eachplugin):
                                 master_version_prefix = m_data['version'][0:master_dot_index]
                                 master_version_ending = m_data['version'][(master_dot_index+1):]
 
-                                print team_version_prefix +" == "+ master_version_prefix
+                                logging.debug(team_version_prefix +" == "+ master_version_prefix)
+
                                 if team_version_prefix == master_version_prefix:
 
-                                    amatch = compare_environment(team_version_ending, master_version_ending, eachplugin)
+                                    amatch = compare_environment(team_version_ending, master_version_ending, eachteamplugin)
                                     logging.debug( team_version_ending+ " === " +master_version_ending+"\n" )
 
-                                    compared_array.append( {"master_env": get_service_name_ending(m_data["servicename"]),
-                                                             "master_version": m_data['version'].replace("signiant/",""),
-                                                             "master_updateddate":"",
-                                                             "team_env": get_service_name_ending(tkey["servicename"]),
-                                                             "team_version": tkey['version'].replace("signiant/",""),
-                                                             "team_updateddate":"",
-                                                             "Match":amatch, "mastername": mastername,
-                                                             "regionname":tkey['regionname']})
+                                    ecs_data.append({"master_env": get_service_name_ending(m_data["servicename"]),
+                                             "master_version": m_data['version'].replace("signiant/",""),
+                                             "master_updateddate":"",
+                                             "team_env": get_service_name_ending(tkey["servicename"]),
+                                             "team_version": tkey['version'].replace("signiant/",""),
+                                             "team_updateddate":"",
+                                             "Match":amatch, "mastername": eachmaster,
+                                             "regionname":tkey['regionname'],
+                                             "slackchannel": tkey['slackchannel'],
+                                             "pluginname": eachteamplugin
+                                            })
 
+    #adding to compared_array
+    compared_array.update({'eb': eb_data})
+    compared_array.update({'ecs':ecs_data})
 
-    pprint.pprint(compared_array)
+    #pprint.pprint(compared_array)
 
     return compared_array
 

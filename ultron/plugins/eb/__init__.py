@@ -59,7 +59,7 @@ def get_r53_alias_entry(query_name,zoneid, current_session):
 
     return endpoint
 
-def eb_check_versions(profile_name, region_name, chealth, env_array, onlyiflive):
+def eb_check_versions(profile_name, region_name, chealth, env_array, onlyiflive,slack_channel):
 
     mysession = boto3.session.Session(profile_name=profile_name, region_name=region_name)
     client = mysession.client('elasticbeanstalk')
@@ -79,7 +79,7 @@ def eb_check_versions(profile_name, region_name, chealth, env_array, onlyiflive)
         # set app version
         c_appversion = {('app'): c_app, ('version'): c_version, ('environmentname'): c_env,
                         ('solutionstack'): c_solstack, ('health'): c_health, ('dateupdated'):date_updated,
-                        ('regionname'): region_name}
+                        ('regionname'): region_name,('slackchannel'):slack_channel}
 
         for areas in env_array:
 

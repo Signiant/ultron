@@ -8,7 +8,7 @@ def log (message):
 def id():
     return "ecs"
 
-def ecs_check_versions(profile_name, region_name, cluster_name):
+def ecs_check_versions(profile_name, region_name, cluster_name,slack_channel):
 
     service_versions = []
 
@@ -38,7 +38,10 @@ def ecs_check_versions(profile_name, region_name, cluster_name):
 
                 # version_parsed, team_service_name, region_name
 
-                c_service = {"version":version_parsed,"servicename":team_service_name,"regionname":region_name}
+                c_service = {"version":version_parsed,
+                             "servicename":team_service_name,
+                             "regionname":region_name,
+                             "slackchannel":slack_channel}
 
                 service_versions.append(c_service)
 

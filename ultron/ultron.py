@@ -3,6 +3,7 @@ import os, sys
 import pprint
 import imp, argparse
 import logging
+import collections
 
 #project modules
 import plugin
@@ -22,13 +23,11 @@ def read_config_file(path):
 
     return config_map
 
-
 #main
 def main(argv):
 
-    masterdata = []
-
-    teamdata = []
+    masterdata = {}
+    teamdata = {}
 
     log_level = logging.INFO
 
@@ -78,28 +77,42 @@ def main(argv):
                     if plugin_name == "eb":
                         plugin_data = plugin_handle.eb_check_versions(team_list[team]['profile_name'], aplugin['region_name'],
                                                                aplugin['onlycheckifhealthy'], aplugin['environments'],
-                                                               aplugin['onlylive'])
+                                                               aplugin['onlylive'],team_list[team]["slack_channel"])
                     elif plugin_name == "ecs":
                         plugin_data = plugin_handle.ecs_check_versions(team_list[team]['profile_name'], aplugin['region_name'],
-                                                               aplugin['cluster_name'])
+                                                               aplugin['cluster_name'],team_list[team]["slack_channel"])
+
                     logging.debug(plugin_data)
                     # Store the plugin output in an array
                     if team_list[team]["master"]:
-                        masterdata.append({team: {plugin_name: plugin_data}})
+                        #update dictionary if key exists
+                        if masterdata.has_key(team):
+                            masterdata[team].update({plugin_name: plugin_data})
+                        else:
+                            masterdata[team] = ({plugin_name: plugin_data})
+
                     else:
-                        teamdata.append({team : { plugin_name : plugin_data }})
+                        # update dictionary if key exists
+                        if teamdata.has_key(team):
+                            teamdata[team].update({plugin_name: plugin_data})
+                        else:
+                            teamdata[team] = ({ plugin_name : plugin_data })
                 except Exception, e:
                     print str(e)
 
     logging.debug(masterdata)
     logging.debug(teamdata)
 
+    #print "masterdata"
+    #pprint.pprint(masterdata)
+    #print "teamdata"
+    #pprint.pprint(teamdata)
+
+
     for indteam in teamdata:
-        for theteam in indteam:
-            for theplugin in indteam[theteam]:
-                compared_data = compare.compare_teams(indteam[theteam][theplugin],masterdata, theplugin)
-                #passing data for each team and the team name
-                output.output_slack_payload(compared_data, config_map["General"]["webhook_url"], theplugin, theteam)
+        compared_data = compare.compare_teams(teamdata[indteam],masterdata)
+        #passing data for each team and the team name
+        output.output_slack_payload(compared_data, config_map["General"]["webhook_url"], indteam)
 
 
 if __name__ == "__main__":
