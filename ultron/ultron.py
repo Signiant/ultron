@@ -81,6 +81,8 @@ def main(argv):
                     elif plugin_name == "ecs":
                         plugin_data = plugin_handle.ecs_check_versions(team_list[team]['profile_name'], aplugin['region_name'],
                                                                aplugin['cluster_name'],team_list[team]["slack_channel"])
+                    else:
+                        logging.debug("plugin "+plugin_name+" does not exist")
 
                     logging.debug(plugin_data)
                     # Store the plugin output in an array

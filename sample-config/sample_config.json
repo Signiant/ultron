@@ -1,0 +1,80 @@
+{"General":
+  {
+      "webhook_url":"enter_slack_webhook_here"
+  },
+  "Teams": {
+    "master_team": {
+      "master": true,
+      "slack_channel": "",
+      "profile_name": "master_team",
+      "plugins":
+      [{
+          "pluginname": "eb",
+          "region_name": "us-south-5",
+          "onlycheckifhealthy": true,
+          "onlylive":true,
+          "environments": {
+            "application_name_1":{"zone_id": "", "dns_name": ""},
+            "application_name_2":{"zone_id": "", "dns_name": ""},
+            "application_name_3":{"zone_id": "", "dns_name": ""},
+            "application_name_4":{"zone_id": "", "dns_name": ""},
+            "application_name_5":{"zone_id": "", "dns_name": ""},
+            "application_name_6":{"zone_id": "", "dns_name": "" }}
+        },
+        {
+           "pluginname": "ecs",
+           "region_name": "us-south-5",
+           "cluster_name": ""
+        }]
+    },
+      "team1": {
+        "master": false,
+        "slack_channel": "#team1_channel",
+        "profile_name": "team_profile",
+        "plugins": [{"pluginname":"eb",
+                     "region_name": "eu-north-1",
+                      "onlycheckifhealthy": true,
+                      "onlylive":true,
+                      "environments": {
+                           "team_application_name_1":{"zone_id": "", "dns_name": ""},
+                           "team_application_name_2":{ "zone_id": "", "dns_name": ""},
+                           "team_application_name_3":{ "zone_id": "", "dns_name": ""},
+                           "team_application_name_4":{"zone_id": "", "dns_name": ""},
+                           "team_application_name_5":{"zone_id": "", "dns_name": ""},
+                           "team_application_name_6":{"zone_id": "", "dns_name": "" }}
+                  },
+                  {
+                       "pluginname": "ecs",
+                       "region_name": "eu-north-1",
+                       "cluster_name": ""
+                  }]
+      },
+      "team2": {
+          "master": false,
+          "slack_channel": "#team2_channel",
+          "profile_name": "team_profile",
+          "plugins": [{"pluginname":"eb",
+                       "region_name": "eu-north-2",
+                        "onlycheckifhealthy": true,
+                        "onlylive":true,
+                        "environments": {
+                           "team_application_name_1":{"zone_id": "", "dns_name": ""},
+                           "team_application_name_2":{ "zone_id": "", "dns_name": ""},
+                           "team_application_name_3":{"zone_id": "", "dns_name": ""},
+                           "team_application_name_4":{"zone_id": "", "dns_name": ""},
+                           "team_application_name_5":{"zone_id": "", "dns_name": ""},
+                           "team_application_name_6":{"zone_id": "", "dns_name": "" }}
+                    },
+                    {
+                       "pluginname": "ecs",
+                       "region_name": "eu-north-2",
+                       "cluster_name": ""
+                    }]
+        }
+  }
+
+}
+
+
+
+
