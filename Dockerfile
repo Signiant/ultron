@@ -4,11 +4,12 @@ RUN apk --no-cache add ca-certificates
 
 RUN mkdir /src
 
-COPY ultron/ /src/
+COPY /ultron/ /src/
 
 WORKDIR /src
 
 RUN pip install -r requirements.txt
 
-ENTRYPOINT ["python","/src/ultron.py"]
-CMD ["-h"]
+ENTRYPOINT ["python","ultron.py","-c", "ultron_config.json"]
+
+

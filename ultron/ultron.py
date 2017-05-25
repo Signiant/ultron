@@ -1,9 +1,7 @@
-import json, requests
+import json
 import os, sys
-import pprint
 import imp, argparse
 import logging
-import collections
 
 #project modules
 import plugin
@@ -18,8 +16,8 @@ def read_config_file(path):
         config_file_handle = open(path)
         config_map = json.load(config_file_handle)
         config_file_handle.close()
-    except:
-        print "unable to load file"
+    except Exception as e:
+        print "unable to load file" + str(e)
 
     return config_map
 
@@ -85,36 +83,32 @@ def main(argv):
                         logging.debug("plugin "+plugin_name+" does not exist")
 
                     logging.debug(plugin_data)
-                    # Store the plugin output in an array
-                    if team_list[team]["master"]:
-                        #update dictionary if key exists
-                        if masterdata.has_key(team):
-                            masterdata[team].update({plugin_name: plugin_data})
-                        else:
-                            masterdata[team] = ({plugin_name: plugin_data})
 
-                    else:
-                        # update dictionary if key exists
-                        if teamdata.has_key(team):
-                            teamdata[team].update({plugin_name: plugin_data})
+                    # Store the plugin output in an array if data recieved from calls
+                    if plugin_data:
+                        if team_list[team]["master"]:
+                            # update dictionary if key exists
+                            if masterdata.has_key(team):
+                                masterdata[team].update({plugin_name: plugin_data})
+                            else:
+                                masterdata[team] = ({plugin_name: plugin_data})
+
                         else:
-                            teamdata[team] = ({ plugin_name : plugin_data })
+                            # update dictionary if key exists
+                            if teamdata.has_key(team):
+                                teamdata[team].update({plugin_name: plugin_data})
+                            else:
+                                teamdata[team] = ({plugin_name: plugin_data})
+
                 except Exception, e:
                     print str(e)
                 except EOFError, e:
-                    print "End of file reached and value "+e+" not found"
+                    print "End of file reached and value " + e + " not found"
                 except KeyError, e:
-                    print "Key "+e+"not found"
-
+                    print "Key " + e + "not found"
 
     logging.debug(masterdata)
     logging.debug(teamdata)
-
-    #print "masterdata"
-    #pprint.pprint(masterdata)
-    #print "teamdata"
-    #pprint.pprint(teamdata)
-
 
     for indteam in teamdata:
         compared_data = compare.compare_teams(teamdata[indteam],masterdata)

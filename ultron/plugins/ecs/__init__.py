@@ -11,6 +11,7 @@ def id():
 def ecs_check_versions(profile_name, region_name, cluster_name,slack_channel):
 
     service_versions = []
+    team_service_name = ""
 
     try:
         mysession = boto3.session.Session(profile_name=profile_name, region_name=region_name)
@@ -39,13 +40,13 @@ def ecs_check_versions(profile_name, region_name, cluster_name,slack_channel):
                         team_service_name = envs['value']
 
                 # version_parsed, team_service_name, region_name
+                if len(team_service_name) > 1:
+                    c_service = {"version":version_parsed,
+                                 "servicename":team_service_name,
+                                 "regionname":region_name,
+                                 "slackchannel":slack_channel}
 
-                c_service = {"version":version_parsed,
-                             "servicename":team_service_name,
-                             "regionname":region_name,
-                             "slackchannel":slack_channel}
-
-                service_versions.append(c_service)
+                    service_versions.append(c_service)
 
     except Exception, e:
         print("Error obtaining paginated services for " + cluster_name + " (" + str(e) + ")")

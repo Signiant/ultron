@@ -149,8 +149,10 @@ def compare_teams(t_array,m_array):
                                             })
 
     #adding to compared_array
-    compared_array.update({'eb': eb_data})
-    compared_array.update({'ecs':ecs_data})
+    if eb_data:
+        compared_array.update({'eb': eb_data})
+    if ecs_data:
+        compared_array.update({'ecs':ecs_data})
 
     #pprint.pprint(compared_array)
 

@@ -1,6 +1,6 @@
 ## ultron
-compare production and aws environment 
-versions for each team then post to slack
+compare production and dev aws environment
+versions for dev teams then post to slack
 
 ##Purpose
 There are multiple agile development teams using AWS on various projects.

@@ -104,7 +104,7 @@ def create_plugin_format(data_array,theplugin, theattachment, thetitle_beginning
     field_not_matching = []
     field_repo = []
 
-    some_data = []
+    some_data = dict()
 
     for value in data_array[theplugin]:
         if value["Match"] == 1:
@@ -113,6 +113,9 @@ def create_plugin_format(data_array,theplugin, theattachment, thetitle_beginning
             append_to_field(field_not_matching, value, value["Match"], value['mastername'])
         if value["Match"] == 3:
             append_to_field(field_repo, value, value["Match"], value['mastername'])
+
+        some_data.update({'slack_channel':value['slackchannel']})
+        some_data.update({'region_name':value['regionname']})
 
     # append not matching
     if field_not_matching:
@@ -129,9 +132,6 @@ def create_plugin_format(data_array,theplugin, theattachment, thetitle_beginning
         thetitle = thetitle_beginning + " matching " + value['mastername']
         the_color = "#7bcd8a"
         theattachment.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
-
-    some_data.append(value['slackchannel'])
-    some_data.append(value['regionname'])
 
     return some_data
 
@@ -157,8 +157,10 @@ def output_slack_payload(data_array, webhook_url, eachteam):
 
     attachments = eb_attachments + ecs_attachments
 
-    theregionname = required_data[1]
-    theslackchannel = required_data[0]
+    theregionname = required_data['region_name']
+    theslackchannel = required_data['slack_channel']
+
+    print "the team is " + eachteam + " slack channel " + theslackchannel
 
     pretext = "*Region:* " + theregionname + ", " + eachteam
     attachments.insert(0,{'pretext':pretext, "mrkdwn_in": ["pretext"] })
@@ -166,25 +168,30 @@ def output_slack_payload(data_array, webhook_url, eachteam):
     logging.debug("printing attachments")
     logging.debug(attachments)
 
-    pprint.pprint(attachments)
+    #pprint.pprint(attachments)
 
+    try:
+        #creating payload, CHANNEL WILL NEED TO BE DIFFERENT FOR EACH TEAM
+        result = {
+            'as_user': False,
+            "channel": theslackchannel,
+            "attachments":attachments
+        }
 
-    #creating payload, CHANNEL WILL NEED TO BE DIFFERENT FOR EACH TEAM
-    result = {
-        'as_user': False,
-        "channel": theslackchannel,
-        "attachments":attachments
-    }
-
-    #sending json payload
-    response = requests.post(
-        webhook_url, json=result
-    )
-
-    if response.status_code != 200:
-        raise ValueError(
-            'Slack returned status code %s, the response text is %s'%(response.status_code,response.text)
+        #sending json payload
+        response = requests.post(
+            webhook_url, json=result
         )
+
+        if response.status_code != 200:
+            raise ValueError(
+                'Slack returned status code %s, the response text is %s'%(response.status_code,response.text)
+            )
+
+    except Exception, e:
+        print str(e)
+
+
 
     return  response.status_code
 
