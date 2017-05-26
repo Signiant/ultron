@@ -42,7 +42,7 @@ To run the tool you require a set config file and aws credentials
 
 Project Organization
 ---
-
+  
 The project is structured as follows:
 
 * Ultron.py - this invokes each plugin, calls the comparator functions and output formatter
