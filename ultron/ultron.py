@@ -115,6 +115,8 @@ def main(argv):
         #passing data for each team and the team name
         output.output_slack_payload(compared_data, config_map["General"]["webhook_url"], indteam)
 
+    logging.info("ULTRON PROGRAM TERMINATED")
+
 
 if __name__ == "__main__":
    main(sys.argv[1:])

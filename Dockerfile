@@ -10,6 +10,6 @@ WORKDIR /src
 
 RUN pip install -r requirements.txt
 
-ENTRYPOINT ["python","ultron.py","-c", "ultron_config.json"]
+ENTRYPOINT ["python","ultron.py", "-c","ultron_config.json"]
 
 

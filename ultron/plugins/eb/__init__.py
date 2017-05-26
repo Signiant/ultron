@@ -106,7 +106,6 @@ def eb_check_versions(profile_name, region_name, chealth, env_array, onlyiflive,
 
                         env_lb = get_env_elb(c_env, region_name, mysession)
                         checklive = is_current_eb_env_live(env_lb, current_dns_name, current_zone_id, region_name,mysession)
-
                     else:
                         checklive = False
 
@@ -116,7 +115,6 @@ def eb_check_versions(profile_name, region_name, chealth, env_array, onlyiflive,
                                 appversions.append(c_appversion)
                         else:
                             appversions.append(c_appversion)
-                #if check is false
                 else:
                     if chealth:
                         if env['Health'] == "Green":

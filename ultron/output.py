@@ -91,11 +91,24 @@ def append_to_field(fields, value, match_type, mastername):
                  + form_the_time(value["team_updateddate"]),
         'short': "true"
     })
-
+    #adding more slack fields to create vertical spacing
     add_indent_fields(fields)
     add_indent_fields(fields)
 
     return 1
+
+#get the slack channel and region for slack post
+def get_item_from_array(data_array,item_string):
+
+    try:
+        result = data_array.itervalues().next()[0][str(item_string)]
+        return result
+    except KeyError:
+        print "key "+item_string+" not found"
+    except Exception,e:
+        print "error in get_item_from_array function "+str(e)
+
+
 
 #create attachment for each plugin
 def create_plugin_format(data_array,theplugin, theattachment, thetitle_beginning):
@@ -104,8 +117,6 @@ def create_plugin_format(data_array,theplugin, theattachment, thetitle_beginning
     field_not_matching = []
     field_repo = []
 
-    some_data = dict()
-
     for value in data_array[theplugin]:
         if value["Match"] == 1:
             append_to_field(field_matching, value, value["Match"], value['mastername'])
@@ -113,9 +124,6 @@ def create_plugin_format(data_array,theplugin, theattachment, thetitle_beginning
             append_to_field(field_not_matching, value, value["Match"], value['mastername'])
         if value["Match"] == 3:
             append_to_field(field_repo, value, value["Match"], value['mastername'])
-
-        some_data.update({'slack_channel':value['slackchannel']})
-        some_data.update({'region_name':value['regionname']})
 
     # append not matching
     if field_not_matching:
@@ -133,34 +141,31 @@ def create_plugin_format(data_array,theplugin, theattachment, thetitle_beginning
         the_color = "#7bcd8a"
         theattachment.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
 
-    return some_data
+    return 1
 
 
 #main output to slack function
 def output_slack_payload(data_array, webhook_url, eachteam):
 
-    attachments = []
-
+    #if more plugins are added
     eb_attachments = []
     ecs_attachments = []
-
-    required_data = []
 
     logging.debug("printing data array in output_slack_payload")
     logging.debug(data_array)
 
     for theplugin in data_array:
         if theplugin == "eb":
-            required_data = create_plugin_format(data_array,theplugin, eb_attachments,"Beanstalk environments")
+            create_plugin_format(data_array,theplugin, eb_attachments,"Beanstalk environments")
         elif theplugin == "ecs":
-            required_data = create_plugin_format(data_array, theplugin, ecs_attachments,"ECS services")
+            create_plugin_format(data_array, theplugin, ecs_attachments,"ECS services")
 
     attachments = eb_attachments + ecs_attachments
 
-    theregionname = required_data['region_name']
-    theslackchannel = required_data['slack_channel']
+    theregionname = get_item_from_array(data_array,'regionname')
+    theslackchannel = get_item_from_array(data_array,'slackchannel')
 
-    print "the team is " + eachteam + " slack channel " + theslackchannel
+    logging.debug( "the team is " + eachteam + " slack channel " + theslackchannel+" the region is "+theregionname)
 
     pretext = "*Region:* " + theregionname + ", " + eachteam
     attachments.insert(0,{'pretext':pretext, "mrkdwn_in": ["pretext"] })
@@ -168,10 +173,10 @@ def output_slack_payload(data_array, webhook_url, eachteam):
     logging.debug("printing attachments")
     logging.debug(attachments)
 
-    #pprint.pprint(attachments)
+    #logging.debug(pprint.pprint(attachments))
 
     try:
-        #creating payload, CHANNEL WILL NEED TO BE DIFFERENT FOR EACH TEAM
+        #creating json payload
         result = {
             'as_user': False,
             "channel": theslackchannel,
@@ -190,8 +195,6 @@ def output_slack_payload(data_array, webhook_url, eachteam):
 
     except Exception, e:
         print str(e)
-
-
 
     return  response.status_code
 
