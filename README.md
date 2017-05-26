@@ -22,7 +22,7 @@ Sample Report
 
 The report that gets posted on each teams slack looks something like this...
 
-![Sample Report](https://raw.githubusercontent.com/Signiant/ultron/master/images/sample_ultron_report.jpg)
+![Sample Report](https://raw.githubusercontent.com/Signiant/ultron/master/images/sample_ultron_report.png)
 
 
 Prerequisites
