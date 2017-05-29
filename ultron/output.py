@@ -26,6 +26,7 @@ def display_results(data_array):
               + "master updated on "+ value["team_updateddate"].strftime('%m/%d/%Y %H:%M:%S')
               +" === "+ themessage+"\n")
 
+
 def add_indent_fields(fields):
     fields.append({
             "title": "",
@@ -39,6 +40,7 @@ def add_indent_fields(fields):
     })
     return 1
 
+#format time if data available
 def form_the_time(thetime):
 
     if thetime == "":
@@ -48,7 +50,7 @@ def form_the_time(thetime):
 
     return time_updated
 
-
+#compress string is larger than 30 length
 def shorten_input(thestring):
     if len(thestring) > 30:
         thestring = thestring[:27]+"..."
@@ -64,21 +66,16 @@ def format_version(thestring):
         outputstring = shorten_input("ver: "+thestring[:colon_index])+"\nver#: "+thestring[(colon_index+1):]
         return outputstring
     else:
-        thestring = "ver: "+thestring
-        return thestring
+        outputstring = "ver: "+thestring
+        return outputstring
+
 
 #adding emojis to fields
-def append_to_field(fields, value, match_type, mastername):
-    if match_type == 1:
-        emojicon = ":relaxed:"
-    elif match_type == 2:
-        emojicon = ":cry:"
-    elif match_type == 3:
-        emojicon = ":thinking_face: "
+def append_to_field(fields, value, mastername):
 
     fields.append({
         # adding team data
-            "title": "\n\n"+emojicon+shorten_input(value['team_env']),
+            "title": "\n\n"+shorten_input(value['team_env']),
             "value": format_version(value['team_version'])
                      + form_the_time(value["team_updateddate"]),
             "short": "true"
@@ -86,7 +83,7 @@ def append_to_field(fields, value, match_type, mastername):
 
     fields.append({
         # adding master data
-        'title': "\n\n"+emojicon+shorten_input(mastername+": "+value['master_env']),
+        'title': "\n\n"+shorten_input(mastername+": "+value['master_env']),
         'value': format_version(value['master_version'])
                  + form_the_time(value["team_updateddate"]),
         'short': "true"
@@ -96,6 +93,7 @@ def append_to_field(fields, value, match_type, mastername):
     add_indent_fields(fields)
 
     return 1
+
 
 #get the slack channel and region for slack post
 def get_item_from_array(data_array,item_string):
@@ -109,7 +107,6 @@ def get_item_from_array(data_array,item_string):
         print "error in get_item_from_array function "+str(e)
 
 
-
 #create attachment for each plugin
 def create_plugin_format(thedata, thetitle_beginning ):
 
@@ -121,11 +118,11 @@ def create_plugin_format(thedata, thetitle_beginning ):
 
     for value in thedata:
         if value["Match"] == 1:
-            append_to_field(field_matching, value, value["Match"], value['mastername'])
+            append_to_field(field_matching, value, value['mastername'])
         if value["Match"] == 2:
-            append_to_field(field_not_matching, value, value["Match"], value['mastername'])
+            append_to_field(field_not_matching, value, value['mastername'])
         if value["Match"] == 3:
-            append_to_field(field_repo, value, value["Match"], value['mastername'])
+            append_to_field(field_repo, value, value['mastername'])
 
     # append not matching
     if field_not_matching:
@@ -149,9 +146,6 @@ def create_plugin_format(thedata, thetitle_beginning ):
 #main output to slack function
 def output_slack_payload(data_array, webhook_url, eachteam):
 
-
-    pprint.pprint(data_array)
-
     attachments = []
 
     logging.debug("printing data array in output_slack_payload")
@@ -172,7 +166,6 @@ def output_slack_payload(data_array, webhook_url, eachteam):
     logging.debug(attachments)
 
     #logging.debug(pprint.pprint(attachments))
-    pprint.pprint(attachments)
 
 
     try:
@@ -195,8 +188,6 @@ def output_slack_payload(data_array, webhook_url, eachteam):
 
     except Exception, e:
         print str(e)
-
-
 
     return  response.status_code
 
