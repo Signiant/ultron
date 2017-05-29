@@ -111,13 +111,15 @@ def get_item_from_array(data_array,item_string):
 
 
 #create attachment for each plugin
-def create_plugin_format(data_array,theplugin, theattachment, thetitle_beginning):
+def create_plugin_format(thedata, thetitle_beginning ):
 
     field_matching = []
     field_not_matching = []
     field_repo = []
 
-    for value in data_array[theplugin]:
+    theattachment = []
+
+    for value in thedata:
         if value["Match"] == 1:
             append_to_field(field_matching, value, value["Match"], value['mastername'])
         if value["Match"] == 2:
@@ -141,26 +143,22 @@ def create_plugin_format(data_array,theplugin, theattachment, thetitle_beginning
         the_color = "#7bcd8a"
         theattachment.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
 
-    return 1
+    return theattachment
 
 
 #main output to slack function
 def output_slack_payload(data_array, webhook_url, eachteam):
 
-    #if more plugins are added
-    eb_attachments = []
-    ecs_attachments = []
+
+    pprint.pprint(data_array)
+
+    attachments = []
 
     logging.debug("printing data array in output_slack_payload")
     logging.debug(data_array)
 
     for theplugin in data_array:
-        if theplugin == "eb":
-            create_plugin_format(data_array,theplugin, eb_attachments,"Beanstalk environments")
-        elif theplugin == "ecs":
-            create_plugin_format(data_array, theplugin, ecs_attachments,"ECS services")
-
-    attachments = eb_attachments + ecs_attachments
+        attachments = attachments + create_plugin_format(data_array[theplugin], theplugin)
 
     theregionname = get_item_from_array(data_array,'regionname')
     theslackchannel = get_item_from_array(data_array,'slackchannel')
@@ -174,6 +172,8 @@ def output_slack_payload(data_array, webhook_url, eachteam):
     logging.debug(attachments)
 
     #logging.debug(pprint.pprint(attachments))
+    pprint.pprint(attachments)
+
 
     try:
         #creating json payload
@@ -195,6 +195,8 @@ def output_slack_payload(data_array, webhook_url, eachteam):
 
     except Exception, e:
         print str(e)
+
+
 
     return  response.status_code
 

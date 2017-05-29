@@ -150,9 +150,9 @@ def compare_teams(t_array,m_array):
 
     #adding to compared_array
     if eb_data:
-        compared_array.update({'eb': eb_data})
+        compared_array.update({'Beanstalk environments': eb_data})
     if ecs_data:
-        compared_array.update({'ecs':ecs_data})
+        compared_array.update({'ECS services':ecs_data})
 
     #pprint.pprint(compared_array)
 
