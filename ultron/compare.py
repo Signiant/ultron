@@ -51,10 +51,14 @@ def compare_environment(team_env,master_env, eachplugin):
                     result = 3
 
     elif eachplugin == "ecs":
-        if team_env == master_env:
-            result = 1
-        else:
-            result = 2
+        if "master" in master_env or "trunk" in master_env:
+            if team_env == master_env:
+                result = 1
+            else:
+                if "master" in team_env or "trunk" in team_env:
+                    result = 2
+                else:
+                    result = 3
 
     logging.debug("comparing %s and %s result is %s"% (team_env,master_env,result))
     return result
