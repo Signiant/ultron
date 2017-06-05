@@ -58,25 +58,13 @@ def shorten_input(thestring):
     else:
         return thestring
 
-
-#format the version info displayed depending on ecs or eb data
-def format_version(thestring):
-    if thestring.find(":") != -1:
-        colon_index = thestring.find(":")
-        outputstring = shorten_input("ver: "+thestring[:colon_index])+"\nver#: "+thestring[(colon_index+1):]
-        return outputstring
-    else:
-        outputstring = "ver: "+thestring
-        return outputstring
-
-
 #adding emojis to fields
 def append_to_field(fields, value, mastername):
 
     fields.append({
         # adding team data
             "title": "\n\n"+shorten_input(value['team_env']),
-            "value": format_version(value['team_version'])
+            "value": shorten_input("ver: "+value['team_version'])
                      + form_the_time(value["team_updateddate"]),
             "short": "true"
         })
@@ -84,7 +72,7 @@ def append_to_field(fields, value, mastername):
     fields.append({
         # adding master data
         'title': "\n\n"+shorten_input(mastername+": "+value['master_env']),
-        'value': format_version(value['master_version'])
+        'value': shorten_input("ver: "+value['master_version'])
                  + form_the_time(value["team_updateddate"]),
         'short': "true"
     })
@@ -166,7 +154,6 @@ def output_slack_payload(data_array, webhook_url, eachteam):
     logging.debug(attachments)
 
     #logging.debug(pprint.pprint(attachments))
-
 
     try:
         #creating json payload

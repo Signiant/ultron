@@ -40,6 +40,9 @@ def compare_environment(team_env,master_env, eachplugin):
     2 - Does not match master
     3 - branch
     """""
+
+    result = 0
+
     if eachplugin == "eb":
         if ".master." in master_env:
             if team_env == master_env:
@@ -69,6 +72,25 @@ def does_key_exist(thearray,thestring):
         return thearray[thestring]
     else:
         return ""
+
+def finalize_service_name(service_name,service_def):
+
+    def_name_mod = service_def.lower().replace("-","+").replace("_", "+")
+    service_name_mod = service_name.lower().replace("-","+").replace("_", "+")
+
+    def_name_list = def_name_mod.split("+")
+    service_name_list = service_name_mod.split("+")
+
+    for sname in service_name_list:
+        if sname in def_name_list:
+            def_name_list.remove(sname)
+
+    if len(def_name_list) > 3:
+        result = def_name_list[-3]+service_name
+    else:
+        result = service_name
+
+    return result
 
 
 def compare_teams(t_array,m_array):
@@ -120,31 +142,31 @@ def compare_teams(t_array,m_array):
                     elif eachmasterplugin == "ecs" and eachteamplugin == "ecs":
                         for tkey in t_array[eachteamplugin]:
 
-                            logging.debug( "original team " + get_service_name_ending(tkey["servicename"]) \
-                                                   + "----------- original master " + get_service_name_ending(m_data["servicename"]))
-                            if get_service_name_ending(tkey["servicename"]) == get_service_name_ending(m_data["servicename"]):
-                                logging.debug( "matched")
-                                tkey_edited = tkey['version'].replace("signiant/","")
-                                team_dot_index = tkey_edited.find(':')
-                                team_version_prefix = tkey_edited[:team_dot_index]
-                                team_version_ending = tkey_edited[(team_dot_index+1):]
+                            team_service_definition = tkey['service_definition']
+                            master_service_definition = m_data['service_definition']
 
-                                master_dot_index = m_data['version'].find(':')
-                                master_version_prefix = m_data['version'][0:master_dot_index]
-                                master_version_ending = m_data['version'][(master_dot_index+1):]
+                            if tkey['servicename'] == m_data['servicename']:
 
-                                logging.debug(team_version_prefix +" == "+ master_version_prefix)
+                                logging.debug("Printing comparison of service_definition")
+                                logging.debug(tkey['service_definition'] + " == " + m_data['service_definition'])
 
-                                if team_version_prefix == master_version_prefix:
+                                the_team_service_name = finalize_service_name(tkey['servicename'],
+                                                                              tkey['service_definition'])
+                                the_master_service_name = finalize_service_name(m_data['servicename'],
+                                                                                m_data['service_definition'])
 
-                                    amatch = compare_environment(team_version_ending, master_version_ending, eachteamplugin)
-                                    logging.debug( team_version_ending+ " === " +master_version_ending+"\n" )
+                                logging.debug( the_team_service_name + " == " + the_master_service_name + "\n\n")
 
-                                    ecs_data.append({"master_env": get_service_name_ending(m_data["servicename"]),
-                                             "master_version": m_data['version'].replace("signiant/",""),
+                                if the_team_service_name == the_master_service_name:
+
+                                    amatch = compare_environment(tkey['version'], m_data['version'], eachteamplugin)
+                                    logging.debug( tkey['version']+ " === " +m_data['version']+"\n" )
+
+                                    ecs_data.append({"master_env": the_master_service_name,
+                                             "master_version": m_data['version'],
                                              "master_updateddate":"",
-                                             "team_env": get_service_name_ending(tkey["servicename"]),
-                                             "team_version": tkey['version'].replace("signiant/",""),
+                                             "team_env": the_team_service_name,
+                                             "team_version": tkey['version'],
                                              "team_updateddate":"",
                                              "Match":amatch, "mastername": eachmaster,
                                              "regionname":tkey['regionname'],
@@ -157,6 +179,7 @@ def compare_teams(t_array,m_array):
         compared_array.update({'Beanstalk environments': eb_data})
     if ecs_data:
         compared_array.update({'ECS services':ecs_data})
+
 
     #pprint.pprint(compared_array)
 

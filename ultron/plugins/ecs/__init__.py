@@ -30,19 +30,22 @@ def ecs_check_versions(profile_name, region_name, cluster_name,slack_channel):
             for service_desc in services_descriptions['services']:
                 image = client.describe_task_definition(taskDefinition=service_desc['taskDefinition'])
 
+                #getting ecs service version and name
                 version_output = image['taskDefinition']['containerDefinitions'][0]['image']
                 version_parsed = version_output.replace("signiant/", "")
+                service_dot_index = version_parsed.find(':')
 
-                team_service = image['taskDefinition']['containerDefinitions'][0]['environment']
+                service_version_prefix = version_parsed[0:service_dot_index]
+                service_version_ending = version_parsed[(service_dot_index + 1):]
 
-                for envs in team_service:
-                    if envs['name'] == 'CONFIG_FILE':
-                        team_service_name = envs['value']
+                #detailed ecs service
+                team_service_definition = image['taskDefinition']['family']
 
                 # version_parsed, team_service_name, region_name
-                if len(team_service_name) > 1:
-                    c_service = {"version":version_parsed,
-                                 "servicename":team_service_name,
+                if len(version_output) > 1:
+                    c_service = {"version":service_version_ending,
+                                 "servicename": service_version_prefix,
+                                 "service_definition": team_service_definition,
                                  "regionname":region_name,
                                  "slackchannel":slack_channel}
 
