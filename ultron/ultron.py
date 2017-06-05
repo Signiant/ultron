@@ -21,6 +21,12 @@ def read_config_file(path):
 
     return config_map
 
+def does_key_exist(thearray,thestring):
+    if thearray[thestring]:
+        return thearray[thestring]
+    else:
+        return ""
+
 #main
 def main(argv):
 
@@ -77,8 +83,11 @@ def main(argv):
                                                                aplugin['onlycheckifhealthy'], aplugin['environments'],
                                                                aplugin['onlylive'],team_list[team]["slack_channel"])
                     elif plugin_name == "ecs":
+
+                        env_code_name = does_key_exist(team_list[team],'environment_code_name')
+
                         plugin_data = plugin_handle.ecs_check_versions(team_list[team]['profile_name'], aplugin['region_name'],
-                                                               aplugin['cluster_name'],team_list[team]["slack_channel"])
+                                                               aplugin['cluster_name'],team_list[team]["slack_channel"], env_code_name)
                     else:
                         logging.debug("plugin "+plugin_name+" does not exist")
 
@@ -113,7 +122,7 @@ def main(argv):
     for indteam in teamdata:
         compared_data = compare.compare_teams(teamdata[indteam],masterdata)
         #passing data for each team and the team name
-        output.output_slack_payload(compared_data, config_map["General"]["webhook_url"], indteam)
+        #output.output_slack_payload(compared_data, config_map["General"]["webhook_url"], indteam)
 
     logging.info("ULTRON PROGRAM TERMINATED")
 

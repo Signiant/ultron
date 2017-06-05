@@ -8,7 +8,7 @@ def log (message):
 def id():
     return "ecs"
 
-def ecs_check_versions(profile_name, region_name, cluster_name,slack_channel):
+def ecs_check_versions(profile_name, region_name, cluster_name,slack_channel,env_code_name):
 
     service_versions = []
     team_service_name = ""
@@ -32,7 +32,7 @@ def ecs_check_versions(profile_name, region_name, cluster_name,slack_channel):
 
                 #getting ecs service version and name
                 version_output = image['taskDefinition']['containerDefinitions'][0]['image']
-                version_parsed = version_output.replace("signiant/", "")
+                version_parsed = version_output.split("/")[-1]
                 service_dot_index = version_parsed.find(':')
 
                 service_version_prefix = version_parsed[0:service_dot_index]
@@ -47,7 +47,8 @@ def ecs_check_versions(profile_name, region_name, cluster_name,slack_channel):
                                  "servicename": service_version_prefix,
                                  "service_definition": team_service_definition,
                                  "regionname":region_name,
-                                 "slackchannel":slack_channel}
+                                 "slackchannel":slack_channel,
+                                 "environment_code_name":env_code_name}
 
                     service_versions.append(c_service)
 
