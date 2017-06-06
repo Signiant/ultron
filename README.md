@@ -36,7 +36,7 @@ To run the tool you require a set config file and aws credentials
 
 `docker pull main_directory/ultron`
 
-`docker run -v /absolute path/source_code/sample_config.json:/source-code/sample_config.json  -v /absolute path/aws_credentials:/root/aws_credentials ultron:latest`
+`docker run -v /absolute path/src/sample_config.json:/source-code/config.json  -v /absolute path/the_credentials:/the_credentials ultron`
 
 
 
