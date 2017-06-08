@@ -58,7 +58,7 @@ def shorten_input(thestring):
     else:
         return thestring
 
-#adding emojis to fields
+
 def append_to_field(fields, value, mastername):
 
     fields.append({
@@ -72,8 +72,7 @@ def append_to_field(fields, value, mastername):
     fields.append({
         # adding master data
         'title': "\n\n"+shorten_input(mastername+": "+value['master_env']),
-        'value': shorten_input("ver: "+value['master_version'])
-                 + form_the_time(value["team_updateddate"]),
+        'value': value['master_version'] + form_the_time(value["team_updateddate"]),
         'short': "true"
     })
     #adding more slack fields to create vertical spacing
@@ -96,7 +95,7 @@ def get_item_from_array(data_array,item_string):
 
 
 #create attachment for each plugin
-def create_plugin_format(thedata, thetitle_beginning ):
+def create_plugin_format(thedata, thetitle_beginning):
 
     field_matching = []
     field_not_matching = []

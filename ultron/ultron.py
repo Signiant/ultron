@@ -2,6 +2,7 @@ import json
 import os, sys
 import imp, argparse
 import logging
+import requests
 
 #project modules
 import plugin
@@ -119,10 +120,28 @@ def main(argv):
     logging.debug(masterdata)
     logging.debug(teamdata)
 
+    #get json to get individual services/application build links
+    cached_items = ""
+    cached_array = ""
+
+    b_htags = config_map["General"]["build_tags"]
+
+    returned_data = requests.get(config_map["General"]["build_link"])
+    returned_data_iterator = returned_data.iter_lines()
+
+    for items in returned_data_iterator:
+        if b_htags['8'] in items:
+            cached_items = items.replace(items[items.find(b_htags['5']):items.find(b_htags['6']) + 2], "").replace(b_htags['7'], "")
+            break
+
+    for items in json.loads(cached_items):
+        cached_array = json.loads(cached_items)[items]
+
+    #execute compare and output
     for indteam in teamdata:
-        compared_data = compare.compare_teams(teamdata[indteam],masterdata)
+        compared_data = compare.compare_teams(teamdata[indteam],masterdata, cached_array, b_htags)
         #passing data for each team and the team name
-        #output.output_slack_payload(compared_data, config_map["General"]["webhook_url"], indteam)
+        output.output_slack_payload(compared_data, config_map["General"]["webhook_url"],indteam)
 
     logging.info("ULTRON PROGRAM TERMINATED")
 

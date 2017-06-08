@@ -93,11 +93,15 @@ def eb_check_versions(profile_name, region_name, chealth, env_array, onlyiflive,
                 logging.debug("version label is %s app is %s environment is %s\n areas is %s checking app %s" % (
                 c_version, c_app, c_env, areas, c_app))
 
-            #revert to "for areas in c_app if irregularities occur in matches"
+
             current_application_name =  c_app.replace(" ","").lower()
             current_application_keyword = areas.replace(" ","").lower()
 
             if current_application_keyword in current_application_name:
+
+                # add the corresponding build name tag for each eb environment
+                c_appversion.update({('build_master_tag'): env_array[areas]['build_master_tag']})
+
                 if onlyiflive:
                     current_dns_name = env_array[areas]['dns_name']
                     current_zone_id = env_array[areas]['zone_id']
