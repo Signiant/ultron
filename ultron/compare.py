@@ -199,7 +199,7 @@ def compare_teams(t_array,m_array, cached_array, b_tags):
                                 #   and not a dev branch get the build
 
 
-                                if amatch != 5:
+                                if amatch == 2:
                                     prelim_master_version = get_version_output_string(m_data['version'])
                                     master_version_entry = get_build_url("eb",cached_array, m_data['build_master_tag'],
                                                                        prelim_master_version, b_tags )
@@ -251,7 +251,7 @@ def compare_teams(t_array,m_array, cached_array, b_tags):
 
                                     # if the match is of type 2 where environment/service is not matching prod master
                                     #   and not a dev branch get the build
-                                    if amatch != 5:
+                                    if amatch == 2:
                                         print "the_master_service_name_lookup "+the_master_service_name[0]
                                         if len(the_master_service_name) == 2:
                                             ecs_master_version_entry = get_build_url("ecs", cached_array,the_master_service_name[1],

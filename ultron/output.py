@@ -72,7 +72,7 @@ def append_to_field(fields, value, mastername):
     fields.append({
         # adding master data
         'title': "\n\n"+shorten_input(mastername+": "+value['master_env']),
-        'value': value['master_version'] + form_the_time(value["team_updateddate"]),
+        'value': value['master_version'] + form_the_time(value["master_updateddate"]),
         'short': "true"
     })
     #adding more slack fields to create vertical spacing
