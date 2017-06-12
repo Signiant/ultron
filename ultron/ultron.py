@@ -130,30 +130,23 @@ def main(argv):
                         # Load the plugin from the plugins folder
                         plugin_handle = plugin.loadPlugin(plugin_name)
 
-                        try:
+                        #try:
 
                         #retrieve data from plugin data
 
-                            logging.info("Reading "+str(team)+" data for ultron")
+                        logging.info("RETRIEVING "+str(team).upper()+" "+str(plugin_name).upper()+" DATE FOR ULTRON")
 
-                            plugin_data = plugin_handle.check_versions(master_array,
-                                                                       aplugin,
-                                                                       superjenkins_data,
-                                                                       config_map["General"]["jenkins"]["branch_equivalent_tags"])
+                        plugin_data = plugin_handle.check_versions(master_array,
+                                                                   aplugin,
+                                                                   superjenkins_data,
+                                                                   config_map["General"]["jenkins"]["branch_equivalent_tags"])
 
-                            if plugin_data:
-                                # update dictionary if key exists
-                                if teamdata.has_key(team):
-                                    teamdata[team].update(plugin_data)
-                                else:
-                                    teamdata[team] = (plugin_data)
-
-                        except Exception, e:
-                            print "main ultron plugin error "+str(e)
-                        except EOFError, e:
-                           print "End of file reached and value " + e + " not found"
-                        except KeyError, e:
-                            print "Key " + e + "not found"
+                        if plugin_data:
+                            # update dictionary if key exists
+                            if teamdata.has_key(team):
+                                teamdata[team].update(plugin_data)
+                            else:
+                                teamdata[team] = (plugin_data)
 
     for indteam in teamdata:
         output.output_slack_payload(teamdata[indteam], config_map["General"]["webhook_url"], indteam)

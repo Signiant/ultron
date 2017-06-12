@@ -228,7 +228,6 @@ def ecs_compare_master_team(tkey,m_array, cached_array, jenkins_build_tags, excl
 
                     if do_not_exclude_service:
 
-
                         the_team_service_name = finalize_service_name(t_array['servicename'],
                                                                       t_array['service_definition'],
                                                                       t_array['environment_code_name'])
@@ -292,7 +291,6 @@ def check_versions(master_array, team_array, superjenkins_data, jenkins_build_ta
     for master_items in master_array:
         for m_items in master_items:
             get_master_data = master_items[m_items]
-            logging.debug(get_master_data['profile_name'], get_master_data['region_name'],get_master_data['cluster_name'], get_master_data["slack_channel"],get_master_data['environment_code_name'])
 
             master_plugin_data = ecs_check_versions(get_master_data['profile_name'], get_master_data['region_name'],
                                                     get_master_data['cluster_name'], get_master_data["slack_channel"],
@@ -301,8 +299,6 @@ def check_versions(master_array, team_array, superjenkins_data, jenkins_build_ta
                 masterdata[m_items] = master_plugin_data
 
     #team data preparation
-    logging.debug( team_array['profile_name'], team_array['region_name'],team_array['cluster_name'], team_array["slack_channel"],team_array['environment_code_name'])
-
     team_plugin_data = ecs_check_versions(team_array['profile_name'], team_array['region_name'],
                                           team_array['cluster_name'], team_array["slack_channel"],
                                           team_array['environment_code_name'])

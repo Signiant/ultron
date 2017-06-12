@@ -63,14 +63,15 @@ def append_to_field(fields, value, mastername):
 
     fields.append({
         # adding team data
-            "title": "\n\n"+shorten_input(value['team_env']),
+            "title": shorten_input(value['team_env']),
             "value": value['team_version'] + form_the_time(value["team_updateddate"]),
             "short": "true"
         })
 
     fields.append({
         # adding master data
-        'title': "\n\n"+shorten_input(mastername+": "+value['master_env']),
+        #--trying mastername+": "+
+        'title': shorten_input(value['master_env']),
         'value': value['master_version'] + form_the_time(value["master_updateddate"]),
         'short': "true"
     })
@@ -99,6 +100,14 @@ def get_item_from_array(data_array,item_string):
     return result
 
 
+#align the top headers for each plugin and match output
+def add_blank_space(left_header):
+    spaces_to_add = 40 - len(left_header)
+    blank_spaces = spaces_to_add*" "
+    result = str(left_header)+blank_spaces
+    return result
+
+
 #create attachment for each plugin
 def create_plugin_format(thedata, thetitle_beginning):
 
@@ -118,21 +127,34 @@ def create_plugin_format(thedata, thetitle_beginning):
 
     # append not matching
     if field_not_matching:
-        thetitle = thetitle_beginning + "s not matching " + value['mastername']
+        left_the_title = shorten_input(thetitle_beginning + "s not matching " + value['mastername'])
+        right_the_title = shorten_input(value['mastername']+" "+thetitle_beginning+"s ")
+        field_not_matching[0]['title'] = add_blank_space(left_the_title)+ field_not_matching[0]['title']
+        field_not_matching[1]['title'] = add_blank_space(right_the_title)+ field_not_matching[1]['title']
         the_color = "#ec1010"
-        theattachment.append({'title': thetitle, 'fields': field_not_matching, 'color': the_color})
+        theattachment.append({'fields': field_not_matching, 'color': the_color})
+        #theattachment.append({'title': thetitle, 'fields': field_not_matching, 'color': the_color})
     # append repos
     if field_repo:
-        thetitle = thetitle_beginning + "s running dev branches"
+        left_the_title = shorten_input(thetitle_beginning + "s running dev branches")
+        right_the_title = shorten_input(value['mastername']+" "+thetitle_beginning+"s ")
+        field_repo[0]['title'] = add_blank_space(left_the_title)+ field_repo[0]['title']
+        field_repo[1]['title'] = add_blank_space(right_the_title)+ field_repo[1]['title']
         the_color = "#fef65b"
-        theattachment.append({'title': thetitle, 'fields': field_repo, 'color': the_color})
+        theattachment.append({'fields': field_repo, 'color': the_color})
+        #theattachment.append({'title': thetitle, 'fields': field_repo, 'color': the_color})
     # append matching
     if field_matching:
-        thetitle = thetitle_beginning + "s matching " + value['mastername']
+        left_the_title = shorten_input(thetitle_beginning + "s matching " + value['mastername'])
+        right_the_title = shorten_input(value['mastername']+" "+thetitle_beginning+"s ")
+        field_matching[0]['title'] = add_blank_space(left_the_title)+ field_matching[0]['title']
+        field_matching[1]['title'] = add_blank_space(right_the_title)+ field_matching[1]['title']
         the_color = "#7bcd8a"
-        theattachment.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
+        theattachment.append({'fields': field_matching, 'color': the_color})
+        #theattachment.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
 
     return theattachment
+
 
 #plugin data array is empty
 def no_elements_found(thetitle_beginning):
@@ -173,8 +195,6 @@ def output_slack_payload(data_array, webhook_url, eachteam):
     logging.debug("printing attachments")
     logging.debug(attachments)
 
-    #logging.debug(pprint.pprint(attachments))
-
     try:
         #creating json payload
         result = {
@@ -195,6 +215,7 @@ def output_slack_payload(data_array, webhook_url, eachteam):
 
     except Exception, e:
         print str(e)
+
 
     return  response.status_code
 
