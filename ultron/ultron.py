@@ -3,10 +3,10 @@ import os, sys
 import imp, argparse
 import logging
 import requests
+import pprint
 
 #project modules
 import plugin
-import compare
 import output
 
 
@@ -27,6 +27,31 @@ def does_key_exist(thearray,thestring):
         return thearray[thestring]
     else:
         return ""
+
+#retrieve json data from super jenkins for build urls
+def get_superjenkins_data(superjenkins_link,beginning_script_tag,ending_script_tag):
+
+    # get json to get individual services/application build links
+    cached_items = ""
+    cached_array = ""
+
+    try:
+        returned_data = requests.get(superjenkins_link)
+        returned_data_iterator = returned_data.iter_lines()
+
+        for items in returned_data_iterator:
+            if beginning_script_tag in items:
+                cached_items = items.replace(beginning_script_tag, "").replace(ending_script_tag, "")
+                break
+
+        for items in json.loads(cached_items):
+            cached_array = json.loads(cached_items)[items]
+
+    except Exception, e:
+        print "Error in retrieving and creating json for build urls ==> " + str(e)
+
+    return cached_array
+
 
 #main
 def main(argv):
@@ -67,81 +92,71 @@ def main(argv):
     config_map = read_config_file(args.config)
 
     if config_map:
-
         team_list = config_map["Teams"]
-        for team in team_list:
-            plugins_list = team_list[team]["plugins"]
-            for aplugin in plugins_list:
-                plugin_name = aplugin["pluginname"]
-                logging.debug("Loading plugin %s" % plugin_name)
 
-                # Load the plugin from the plugins folder
-                plugin_handle = plugin.loadPlugin(plugin_name)
+        #get superjenkins data
+        superjenkins_data = get_superjenkins_data(config_map["General"]["build_link"],
+                                 config_map["General"]["script_tags"]["beginning_tag"],
+                                 config_map["General"]["script_tags"]["ending_tag"])
 
-                try:
-                    if plugin_name == "eb":
-                        plugin_data = plugin_handle.eb_check_versions(team_list[team]['profile_name'], aplugin['region_name'],
-                                                               aplugin['onlycheckifhealthy'], aplugin['environments'],
-                                                               aplugin['onlylive'],team_list[team]["slack_channel"])
-                    elif plugin_name == "ecs":
+        if superjenkins_data:
 
-                        env_code_name = does_key_exist(team_list[team],'environment_code_name')
+            master_array = []
 
-                        plugin_data = plugin_handle.ecs_check_versions(team_list[team]['profile_name'], aplugin['region_name'],
-                                                               aplugin['cluster_name'],team_list[team]["slack_channel"], env_code_name)
-                    else:
-                        logging.debug("plugin "+plugin_name+" does not exist")
+            # agregate desginated master team data
+            for team in team_list:
+                if team_list[team]["master"]:
+                    master_array.append({team: team_list[team]})
 
-                    logging.debug(plugin_data)
+            #pprint.pprint(master_array)
 
-                    # Store the plugin output in an array if data recieved from calls
-                    if plugin_data:
-                        if team_list[team]["master"]:
-                            # update dictionary if key exists
-                            if masterdata.has_key(team):
-                                masterdata[team].update({plugin_name: plugin_data})
-                            else:
-                                masterdata[team] = ({plugin_name: plugin_data})
+            for team in team_list:
+                if not team_list[team]["master"]:
+                    plugins_list = team_list[team]["plugins"]
+                    for aplugin in plugins_list:
+                        plugin_name = aplugin["pluginname"]
+                        logging.debug("Loading plugin %s" % plugin_name)
 
-                        else:
-                            # update dictionary if key exists
-                            if teamdata.has_key(team):
-                                teamdata[team].update({plugin_name: plugin_data})
-                            else:
-                                teamdata[team] = ({plugin_name: plugin_data})
+                        # agregate desginated master team data for plugin
+                        master_array = []
+                        for m_team in team_list:
+                            if team_list[m_team]["master"]:
+                                m_plugins_list = team_list[m_team]["plugins"]
+                                for m_aplugin in m_plugins_list:
+                                    m_plugin_name = m_aplugin["pluginname"]
+                                    if m_plugin_name == plugin_name:
+                                        master_array.append({m_team: m_aplugin})
 
-                except Exception, e:
-                    print str(e)
-                except EOFError, e:
-                    print "End of file reached and value " + e + " not found"
-                except KeyError, e:
-                    print "Key " + e + "not found"
+                        # Load the plugin from the plugins folder
+                        plugin_handle = plugin.loadPlugin(plugin_name)
 
-    logging.debug(masterdata)
-    logging.debug(teamdata)
+                        try:
 
-    #get json to get individual services/application build links
-    cached_items = ""
-    cached_array = ""
+                        #retrieve data from plugin data
 
-    b_htags = config_map["General"]["build_tags"]
+                            logging.info("Reading "+str(team)+" data for ultron")
 
-    returned_data = requests.get(config_map["General"]["build_link"])
-    returned_data_iterator = returned_data.iter_lines()
+                            plugin_data = plugin_handle.check_versions(master_array,
+                                                                       aplugin,
+                                                                       superjenkins_data,
+                                                                       config_map["General"]["jenkins"]["branch_equivalent_tags"])
 
-    for items in returned_data_iterator:
-        if b_htags['8'] in items:
-            cached_items = items.replace(items[items.find(b_htags['5']):items.find(b_htags['6']) + 2], "").replace(b_htags['7'], "")
-            break
+                            if plugin_data:
+                                # update dictionary if key exists
+                                if teamdata.has_key(team):
+                                    teamdata[team].update(plugin_data)
+                                else:
+                                    teamdata[team] = (plugin_data)
 
-    for items in json.loads(cached_items):
-        cached_array = json.loads(cached_items)[items]
+                        except Exception, e:
+                            print "main ultron plugin error "+str(e)
+                        except EOFError, e:
+                           print "End of file reached and value " + e + " not found"
+                        except KeyError, e:
+                            print "Key " + e + "not found"
 
-    #execute compare and output
     for indteam in teamdata:
-        compared_data = compare.compare_teams(teamdata[indteam],masterdata, cached_array, b_htags)
-        #passing data for each team and the team name
-        output.output_slack_payload(compared_data, config_map["General"]["webhook_url"],indteam)
+        output.output_slack_payload(teamdata[indteam], config_map["General"]["webhook_url"], indteam)
 
     logging.info("ULTRON PROGRAM TERMINATED")
 

@@ -64,8 +64,7 @@ def append_to_field(fields, value, mastername):
     fields.append({
         # adding team data
             "title": "\n\n"+shorten_input(value['team_env']),
-            "value": shorten_input("ver: "+value['team_version'])
-                     + form_the_time(value["team_updateddate"]),
+            "value": value['team_version'] + form_the_time(value["team_updateddate"]),
             "short": "true"
         })
 
@@ -85,13 +84,19 @@ def append_to_field(fields, value, mastername):
 #get the slack channel and region for slack post
 def get_item_from_array(data_array,item_string):
 
+    result = "Not Found"
+
     try:
-        result = data_array.itervalues().next()[0][str(item_string)]
-        return result
-    except KeyError:
-        print "key "+item_string+" not found"
+        if data_array:
+            for the_data in data_array:
+                for items in data_array[the_data]:
+                    if item_string in items:
+                        result = items[item_string]
+                        break
     except Exception,e:
         print "error in get_item_from_array function "+str(e)
+
+    return result
 
 
 #create attachment for each plugin
@@ -113,21 +118,34 @@ def create_plugin_format(thedata, thetitle_beginning):
 
     # append not matching
     if field_not_matching:
-        thetitle = thetitle_beginning + "  not matching " + value['mastername']
+        thetitle = thetitle_beginning + "s not matching " + value['mastername']
         the_color = "#ec1010"
         theattachment.append({'title': thetitle, 'fields': field_not_matching, 'color': the_color})
     # append repos
     if field_repo:
-        thetitle = thetitle_beginning + " running dev branches"
+        thetitle = thetitle_beginning + "s running dev branches"
         the_color = "#fef65b"
         theattachment.append({'title': thetitle, 'fields': field_repo, 'color': the_color})
     # append matching
     if field_matching:
-        thetitle = thetitle_beginning + " matching " + value['mastername']
+        thetitle = thetitle_beginning + "s matching " + value['mastername']
         the_color = "#7bcd8a"
         theattachment.append({'title': thetitle, 'fields': field_matching, 'color': the_color})
 
     return theattachment
+
+#plugin data array is empty
+def no_elements_found(thetitle_beginning):
+
+    theattachment = []
+
+    thetitle = thetitle_beginning+" not found"
+    the_color = "#9B30FF"
+
+    theattachment.append({'title': thetitle, 'color': the_color})
+
+    return theattachment
+
 
 
 #main output to slack function
@@ -139,7 +157,10 @@ def output_slack_payload(data_array, webhook_url, eachteam):
     logging.debug(data_array)
 
     for theplugin in data_array:
-        attachments = attachments + create_plugin_format(data_array[theplugin], theplugin)
+        if data_array[theplugin]:
+            attachments = attachments + create_plugin_format(data_array[theplugin], theplugin)
+        else:
+            attachments = attachments + no_elements_found(theplugin)
 
     theregionname = get_item_from_array(data_array,'regionname')
     theslackchannel = get_item_from_array(data_array,'slackchannel')
