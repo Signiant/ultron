@@ -1,74 +1,79 @@
 {"General":
   {
-      "webhook_url":"enter_slack_webhook_here"
+      "webhook_url":"enter_slack_webhook_here",
+      "build_link":"superjenkins_link",
+      "jenkins" : {
+        "branch_equivalent_tags": ["list of terms specific to jenkins files to be used"]
+      },
+      "script_tags" : {
+             "beginning_tag":"<script>",
+             "ending_tag":"</script>"
+      }
   },
   "Teams": {
     "master_team": {
       "master": true,
-      "slack_channel": "",
-      "profile_name": "master_team",
       "plugins":
       [{
           "pluginname": "eb",
-          "region_name": "us-south-5",
+          "region_name": "us-north-2",
           "onlycheckifhealthy": true,
           "onlylive":true,
+          "slack_channel": "#master_team",
+          "profile_name": "master_team",
           "environments": {
-            "application_name_1":{"zone_id": "", "dns_name": ""},
-            "application_name_2":{"zone_id": "", "dns_name": ""},
-            "application_name_3":{"zone_id": "", "dns_name": ""},
-            "application_name_4":{"zone_id": "", "dns_name": ""},
-            "application_name_5":{"zone_id": "", "dns_name": ""},
-            "application_name_6":{"zone_id": "", "dns_name": "" }}
+            "master_team_environment":{"zone_id": "", "dns_name": "", "build_master_tag":""}}
         },
         {
            "pluginname": "ecs",
-           "region_name": "us-south-5",
-           "cluster_name": ""
+           "region_name": "us-north-2",
+           "cluster_name": "master_team_cluster",
+           "environment_code_name":"master_team",
+           "slack_channel": "",
+           "profile_name": "master_team",
+           "service_exclude_list" : [""]
         }]
     },
-      "team1": {
+      "team_one": {
         "master": false,
-        "slack_channel": "#team1_channel",
-        "profile_name": "team_profile",
         "plugins": [{"pluginname":"eb",
-                     "region_name": "eu-north-1",
+                     "region_name": "us-north-4",
+                     "slack_channel": "#team_one",
+                     "profile_name": "team_one",
                       "onlycheckifhealthy": true,
-                      "onlylive":true,
+                      "onlylive":false,
                       "environments": {
-                           "team_application_name_1":{"zone_id": "", "dns_name": ""},
-                           "team_application_name_2":{ "zone_id": "", "dns_name": ""},
-                           "team_application_name_3":{ "zone_id": "", "dns_name": ""},
-                           "team_application_name_4":{"zone_id": "", "dns_name": ""},
-                           "team_application_name_5":{"zone_id": "", "dns_name": ""},
-                           "team_application_name_6":{"zone_id": "", "dns_name": "" }}
+                           "team_one_environment":{"zone_id": "", "dns_name": "", "build_master_tag":""}}
                   },
                   {
                        "pluginname": "ecs",
-                       "region_name": "eu-north-1",
-                       "cluster_name": ""
+                       "slack_channel": "#team_one",
+                       "profile_name": "team_one",
+                       "region_name": "us-north-4",
+                       "cluster_name": "team_one_cluster",
+                       "environment_code_name":"team_one",
+                       "service_exclude_list" : [""]
                   }]
       },
-      "team2": {
+      "team_two": {
           "master": false,
-          "slack_channel": "#team2_channel",
-          "profile_name": "team_profile",
           "plugins": [{"pluginname":"eb",
-                       "region_name": "eu-north-2",
+          	           "slack_channel": "#team_two",
+          			       "profile_name": "team_two",
+                       "region_name": "eu-west-6",
                         "onlycheckifhealthy": true,
-                        "onlylive":true,
+                        "onlylive":false,
                         "environments": {
-                           "team_application_name_1":{"zone_id": "", "dns_name": ""},
-                           "team_application_name_2":{ "zone_id": "", "dns_name": ""},
-                           "team_application_name_3":{"zone_id": "", "dns_name": ""},
-                           "team_application_name_4":{"zone_id": "", "dns_name": ""},
-                           "team_application_name_5":{"zone_id": "", "dns_name": ""},
-                           "team_application_name_6":{"zone_id": "", "dns_name": "" }}
+                           "team_two_environment":{"zone_id": "", "dns_name": "", "build_master_tag":""}}
                     },
                     {
                        "pluginname": "ecs",
-                       "region_name": "eu-north-2",
-                       "cluster_name": ""
+                       "slack_channel": "#team_two",
+          			       "profile_name": "team_two",
+                       "environment_code_name":"team_two",
+                       "region_name": "eu-west-6",
+                       "cluster_name": "team_two_cluster",
+                       "service_exclude_list" : [""]
                     }]
         }
   }
