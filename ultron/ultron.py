@@ -101,57 +101,62 @@ def main(argv):
 
         if superjenkins_data:
 
-            master_array = []
-
-            # agregate desginated master team data
-            for team in team_list:
-                if team_list[team]["master"]:
-                    master_array.append({team: team_list[team]})
-
-            #pprint.pprint(master_array)
+            master_array = dict()
+            team_array = dict()
 
             for team in team_list:
-                if not team_list[team]["master"]:
-                    plugins_list = team_list[team]["plugins"]
-                    for aplugin in plugins_list:
-                        plugin_name = aplugin["pluginname"]
-                        logging.debug("Loading plugin %s" % plugin_name)
+                plugins_list = team_list[team]["plugins"]
+                for aplugin in plugins_list:
+                    plugin_name = aplugin["pluginname"]
 
-                        # agregate desginated master team data for plugin
-                        master_array = []
-                        for m_team in team_list:
-                            if team_list[m_team]["master"]:
-                                m_plugins_list = team_list[m_team]["plugins"]
-                                for m_aplugin in m_plugins_list:
-                                    m_plugin_name = m_aplugin["pluginname"]
-                                    if m_plugin_name == plugin_name:
-                                        master_array.append({m_team: m_aplugin})
+                    # agregate desginated master team data for plugin
 
+                    for m_team in team_list:
+                        if team_list[m_team]["master"]:
+                            m_plugins_list = team_list[m_team]["plugins"]
+                            for m_aplugin in m_plugins_list:
+                                m_plugin_name = m_aplugin["pluginname"]
+                                if master_array.has_key(m_plugin_name):
+                                    master_array[m_plugin_name].update({m_team: m_aplugin})
+                                else:
+                                    master_array[m_plugin_name] = ({m_team: m_aplugin})
+                        else:
+                            tm_plugins_list = team_list[m_team]["plugins"]
+                            for tm_aplugin in tm_plugins_list:
+                                tm_plugin_name = tm_aplugin["pluginname"]
+                                if team_array.has_key(tm_plugin_name):
+                                    team_array[tm_plugin_name].update({m_team: tm_aplugin})
+                                else:
+                                    team_array[tm_plugin_name] = ({m_team: tm_aplugin})
+
+
+            #contains team plugin data before output
+            all_team_data = dict()
+
+            for tdata in team_array:
+                for mdata in master_array:
+                    if tdata == mdata:
                         # Load the plugin from the plugins folder
-                        plugin_handle = plugin.loadPlugin(plugin_name)
+                        plugin_handle = plugin.loadPlugin(tdata)
 
-                        #try:
-
-                        #retrieve data from plugin data
-
-                        logging.info("RETRIEVING "+str(team).upper()+" "+str(plugin_name).upper()+" DATE FOR ULTRON")
-
-                        plugin_data = plugin_handle.check_versions(master_array,
-                                                                   aplugin,
+                        plugin_data = plugin_handle.check_versions(master_array[mdata],
+                                                                   team_array[tdata],
                                                                    superjenkins_data,
                                                                    config_map["General"]["jenkins"]["branch_equivalent_tags"])
 
+
                         if plugin_data:
-                            # update dictionary if key exists
-                            if teamdata.has_key(team):
-                                teamdata[team].update(plugin_data)
-                            else:
-                                teamdata[team] = (plugin_data)
+                            for plugin_team in plugin_data:
+                                #all_plugin_temp.append(plugin_data)
+                                if all_team_data.has_key(plugin_team):
+                                    all_team_data[plugin_team].update(plugin_data[plugin_team])
+                                else:
+                                    all_team_data[plugin_team] = (plugin_data[plugin_team])
 
-    for indteam in teamdata:
-        output.output_slack_payload(teamdata[indteam], config_map["General"]["webhook_url"], indteam)
+            for indteam in all_team_data:
+                output.output_slack_payload(all_team_data[indteam], config_map["General"]["webhook_url"], indteam)
 
-    logging.info("ULTRON PROGRAM TERMINATED")
+            logging.info("ULTRON PROGRAM TERMINATED")
 
 
 if __name__ == "__main__":

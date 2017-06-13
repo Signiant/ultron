@@ -309,32 +309,32 @@ def eb_compare_master_team(tkey,m_array, cached_array, jenkins_build_tags):
 
                     #print " master version entry"
 
-    compared_array.update({'EB environment': eb_data})
+    compared_array.update({'eb environment': eb_data})
     return compared_array
 
 #main eb plugin function
 def check_versions(master_array, team_array, superjenkins_data, jenkins_build_tags):
+
     masterdata = dict()
+    teamdata = dict()
 
-    #master data preparation
+
     for master_items in master_array:
-        for m_items in master_items:
-            get_master_data = master_items[m_items]
-            master_plugin_data = eb_check_versions(get_master_data['profile_name'], get_master_data['region_name'],
-                                                    get_master_data['onlycheckifhealthy'], get_master_data['environments'],
-                                                    get_master_data['onlylive'], get_master_data['slack_channel'])
+        get_master_data = master_array[master_items]
+        master_plugin_data = eb_check_versions(get_master_data['profile_name'], get_master_data['region_name'],
+                                               get_master_data['onlycheckifhealthy'], get_master_data['environments'],
+                                               get_master_data['onlylive'], get_master_data['slack_channel'])
 
-            if master_plugin_data:
-                masterdata[m_items] = master_plugin_data
+        if master_plugin_data:
+            masterdata[master_items] = master_plugin_data
 
-    #team data preparation
-    team_plugin_data = eb_check_versions(team_array['profile_name'], team_array['region_name'],
-                                          team_array['onlycheckifhealthy'], team_array['environments'],
-                                          team_array['onlylive'], team_array['slack_channel'])
+    for team_items in team_array:
+        get_team_data = team_array[team_items]
+        team_plugin_data = eb_check_versions(get_team_data['profile_name'], get_team_data['region_name'],
+                                             get_team_data['onlycheckifhealthy'], get_team_data['environments'],
+                                             get_team_data['onlylive'], get_team_data['slack_channel'])
 
+        compared_data = eb_compare_master_team(team_plugin_data, masterdata, superjenkins_data, jenkins_build_tags)
+        teamdata[team_items] = compared_data
 
-
-
-    compared_data = eb_compare_master_team(team_plugin_data, masterdata, superjenkins_data, jenkins_build_tags)
-
-    return compared_data
+    return teamdata

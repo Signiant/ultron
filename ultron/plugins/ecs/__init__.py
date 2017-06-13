@@ -278,7 +278,7 @@ def ecs_compare_master_team(tkey,m_array, cached_array, jenkins_build_tags, excl
                                              "pluginname": "ecs"
                                              })
 
-    compared_array.update({'ECS service': ecs_data})
+    compared_array.update({'ecs service': ecs_data})
     return compared_array
 
 
@@ -286,24 +286,31 @@ def ecs_compare_master_team(tkey,m_array, cached_array, jenkins_build_tags, excl
 def check_versions(master_array, team_array, superjenkins_data, jenkins_build_tags):
 
     masterdata = dict()
+    teamdata = dict()
 
-    #master data preparation
+
     for master_items in master_array:
-        for m_items in master_items:
-            get_master_data = master_items[m_items]
+        get_master_data = master_array[master_items]
+        master_plugin_data = ecs_check_versions(get_master_data['profile_name'], get_master_data['region_name'],
+                                                get_master_data['cluster_name'], get_master_data["slack_channel"],
+                                                get_master_data['environment_code_name'])
 
-            master_plugin_data = ecs_check_versions(get_master_data['profile_name'], get_master_data['region_name'],
-                                                    get_master_data['cluster_name'], get_master_data["slack_channel"],
-                                                    get_master_data['environment_code_name'])
-            if master_plugin_data:
-                masterdata[m_items] = master_plugin_data
+        if master_plugin_data:
+            masterdata[master_items] = master_plugin_data
 
-    #team data preparation
-    team_plugin_data = ecs_check_versions(team_array['profile_name'], team_array['region_name'],
-                                          team_array['cluster_name'], team_array["slack_channel"],
-                                          team_array['environment_code_name'])
+    for team_items in team_array:
+        get_team_data = team_array[team_items]
+        team_plugin_data = ecs_check_versions(get_team_data['profile_name'], get_team_data['region_name'],
+                                              get_team_data['cluster_name'], get_team_data["slack_channel"],
+                                              get_team_data['environment_code_name'])
 
-    compared_data = ecs_compare_master_team(team_plugin_data, masterdata, superjenkins_data, jenkins_build_tags, team_array['service_exclude_list'])
+        compared_data = ecs_compare_master_team(team_plugin_data,
+                                                masterdata,
+                                                superjenkins_data,
+                                                jenkins_build_tags,
+                                                get_team_data['service_exclude_list'])
 
-    return compared_data
+        teamdata[team_items] = compared_data
+
+    return teamdata
 
