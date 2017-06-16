@@ -63,7 +63,7 @@ def append_to_field(fields, value, mastername):
 
     fields.append({
         # adding team data
-            "title": shorten_input(value['team_env']),
+            "title": str(shorten_input(value['team_env'])).title(),
             "value": value['team_version'] + form_the_time(value["team_updateddate"]),
             "short": "true"
         })
@@ -71,7 +71,7 @@ def append_to_field(fields, value, mastername):
     fields.append({
         # adding master data
         #--trying mastername+": "+
-        'title': shorten_input(value['master_env']),
+        'title': str(shorten_input(value['master_env'])).title(),
         'value': value['master_version'] + form_the_time(value["master_updateddate"]),
         'short': "true"
     })

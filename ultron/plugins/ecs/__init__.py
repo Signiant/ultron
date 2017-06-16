@@ -9,12 +9,6 @@ def log (message):
 def id():
     return "ecs"
 
-def does_key_exist(thearray,thestring):
-    if thearray[thestring]:
-        return thearray[thestring]
-    else:
-        return ""
-
 #get ecs data from boto call
 def ecs_check_versions(profile_name, region_name, cluster_name,slack_channel,env_code_name):
 
@@ -65,29 +59,6 @@ def ecs_check_versions(profile_name, region_name, cluster_name,slack_channel,env
 
     return service_versions
 
-#version print out for eb environments
-def get_version_output_string(thestring):
-
-    team_dot_index = thestring.find('.')
-    team_version_ending = thestring[team_dot_index:]
-    version_isolate = team_version_ending.split('.')
-
-    if version_isolate[-2].isdigit():
-        e_str = ('.').join(version_isolate[:-1])
-    elif version_isolate[-3].isdigit():
-        e_str = ('.').join(version_isolate[:-2])
-    else:
-        e_str = ('.').join(version_isolate[:-1])
-
-    return e_str[1:]
-
-#extract the second part of service name to compare
-def get_service_name_ending(thestring):
-    slash_index = thestring.find('/')
-    thestring = thestring[(slash_index+1):]
-    slash_index = thestring.find('-')
-    thestring = thestring[(slash_index + 1):]
-    return thestring.replace('.json',"")
 
 #Main comparing function
 def compare_environment(team_env,master_env, j_tags):
@@ -114,12 +85,6 @@ def compare_environment(team_env,master_env, j_tags):
     logging.debug("comparing %s and %s result is %s"% (team_env,master_env,result))
     return result
 
-
-def does_key_exist(thearray,thestring):
-    if thearray[thestring]:
-        return thearray[thestring]
-    else:
-        return ""
 
 def finalize_service_name(service_name,service_def, environment_code_name):
 
@@ -158,14 +123,32 @@ def format_string_for_comparison(word):
 
     word = word.lower().split("_")
 
-    return word
+    return "_".join(word)
 
 def build_compare_words(lookup,compareto, j_tags):
 
     result = False
 
-    compareto = format_string_for_comparison(compareto)
-    lookup = format_string_for_comparison(lookup)
+    if compareto:
+        if "-" in compareto:
+            compareto = compareto.replace("-", "_")
+        if " " in compareto:
+            compareto = compareto.replace(" ", "_")
+        compareto = compareto.lower().split("_")
+    else:
+        compareto = []
+
+    if lookup:
+        if "-" in lookup:
+            lookup = lookup.replace("-", "_")
+        if " " in lookup:
+            lookup = lookup.replace(" ", "_")
+        lookup = lookup.lower().split("_")
+    else:
+        lookup = []
+
+    #compareto = format_string_for_comparison(compareto)
+    #lookup = format_string_for_comparison(lookup)
 
     res = list(set(compareto) ^ set(lookup))
 
@@ -214,6 +197,13 @@ def ecs_compare_master_team(tkey,m_array, cached_array, jenkins_build_tags, excl
         for m_data in m_array[eachmaster]:
 
             for t_array in tkey:
+
+                #format service names to be lower case and words seperated by underscores
+                t_array['servicename'] = format_string_for_comparison(t_array['servicename'])
+
+                m_data['servicename'] = format_string_for_comparison(m_data['servicename'])
+
+
                 if t_array['servicename'] == m_data['servicename']:
 
                     logging.debug("Printing comparison of service_definition")
@@ -228,6 +218,7 @@ def ecs_compare_master_team(tkey,m_array, cached_array, jenkins_build_tags, excl
 
                     if do_not_exclude_service:
 
+
                         the_team_service_name = finalize_service_name(t_array['servicename'],
                                                                       t_array['service_definition'],
                                                                       t_array['environment_code_name'])
@@ -236,47 +227,51 @@ def ecs_compare_master_team(tkey,m_array, cached_array, jenkins_build_tags, excl
                                                                         m_data['service_definition'],
                                                                         m_data['environment_code_name'])
 
-                        logging.debug(the_team_service_name[0] + " == " + the_master_service_name[0] + "\n\n")
 
 
-                        if the_team_service_name[0] == the_master_service_name[0]:
+                        if  the_team_service_name and the_master_service_name:
+                            if the_team_service_name[0] == the_master_service_name[0]:
 
-                            amatch = compare_environment(t_array['version'], m_data['version'], jenkins_build_tags)
-                            logging.debug(t_array['version'] + " === " + m_data['version'] + "\n")
+                                amatch = compare_environment(t_array['version'], m_data['version'], jenkins_build_tags)
+                                #logging.debug(t_array['version'] + " === " + m_data['version'] + "\n")
 
-                            # if the match is of type 2 where environment/service is not matching prod master
-                            #   and not a dev branch get the build
+                                # if the match is of type 2 where environment/service is not matching prod master
+                                #   and not a dev branch get the build
 
-                            if amatch == 2:
+                                if amatch == 2:
 
-                                if len(the_master_service_name) == 2:
-                                    ecs_master_version_entry = get_build_url(cached_array,
-                                                                             the_master_service_name[1],
-                                                                             m_data['version'], jenkins_build_tags)
-                                elif len(the_master_service_name) == 1:
-                                    ecs_master_version_entry = get_build_url(cached_array,
-                                                                             the_master_service_name[0],
-                                                                             m_data['version'], jenkins_build_tags)
-                            else:
-                                ecs_master_version_entry = "ver: "+m_data['version']
+                                    if len(the_master_service_name) == 2:
+                                        ecs_master_version_entry = get_build_url(cached_array,
+                                                                                 the_master_service_name[1],
+                                                                                 m_data['version'], jenkins_build_tags)
+                                    elif len(the_master_service_name) == 1:
+                                        ecs_master_version_entry = get_build_url(cached_array,
+                                                                                 the_master_service_name[0],
+                                                                                 m_data['version'], jenkins_build_tags)
+                                else:
+                                    ecs_master_version_entry = "ver: "+m_data['version']
 
-                            ecs_team_version_entry = "ver: "+t_array['version']
+                                ecs_team_version_entry = "ver: "+t_array['version']
 
-                            if amatch == 0:
-                                print "match is zero ", t_array['servicename'], " task_def: ", t_array[
-                                    'service_definition'], " => ", the_team_service_name
+                                if amatch == 0:
+                                    print "match is zero ", t_array['servicename'], " task_def: ", t_array[
+                                        'service_definition'], " => ", the_team_service_name
 
-                            ecs_data.append({"master_env": the_master_service_name[0],
-                                             "master_version": ecs_master_version_entry,
-                                             "master_updateddate": "",
-                                             "team_env": the_team_service_name[0],
-                                             "team_version": ecs_team_version_entry,
-                                             "team_updateddate": "",
-                                             "Match": amatch, "mastername": eachmaster,
-                                             "regionname": t_array['regionname'],
-                                             "slackchannel": does_key_exist(t_array, 'slackchannel'),
-                                             "pluginname": "ecs"
-                                             })
+                                #see if a slackchannel is available for team
+                                if t_array.has_key('slackchannel') == False:
+                                    t_array['slackchannel'] = ""
+
+                                ecs_data.append({"master_env": the_master_service_name[0],
+                                                 "master_version": ecs_master_version_entry,
+                                                 "master_updateddate": "",
+                                                 "team_env": the_team_service_name[0],
+                                                 "team_version": ecs_team_version_entry,
+                                                 "team_updateddate": "",
+                                                 "Match": amatch, "mastername": eachmaster,
+                                                 "regionname": t_array['regionname'],
+                                                 "slackchannel": t_array['slackchannel'],
+                                                 "pluginname": "ecs"
+                                                 })
 
     compared_array.update({'ecs service': ecs_data})
     return compared_array
@@ -287,7 +282,6 @@ def check_versions(master_array, team_array, superjenkins_data, jenkins_build_ta
 
     masterdata = dict()
     teamdata = dict()
-
 
     for master_items in master_array:
         get_master_data = master_array[master_items]
